@@ -1,0 +1,26 @@
+{
+  "files": {
+    ".github/speedy-stats-action/.rush/temp/shrinkwrap-deps.json": "620c8a188fe98b678dd94fdd3945267bae5ff8e6",
+    ".github/speedy-stats-action/__tests__/rush-kits.spec.js": "500a8e26456da0361ff65112ee80ce78c2761901",
+    ".github/speedy-stats-action/index.ts": "8ccb7c2232a185035a84a678508a01dbc565897d",
+    ".github/speedy-stats-action/package.json": "735090f989dde1e17bf35838b2620a22770c64c3",
+    ".github/speedy-stats-action/register.js": "8591edc501cf5becff950a9f9c0ffb33c7b484f6",
+    ".github/speedy-stats-action/src/constants.js": "1b51c899d37a77480346f8d56d8417094ddf1c1e",
+    ".github/speedy-stats-action/src/finalizer.js": "523db1c7a365c7d55c55fc784bb256bde5a896db",
+    ".github/speedy-stats-action/src/prepare/action-info.ts": "fc4a888930ea769b1608f1c770289a9a62c3153b",
+    ".github/speedy-stats-action/src/prepare/repo-setup.js": "a29e98605c4590be0194e842b2576bb472b83464",
+    ".github/speedy-stats-action/src/run.js": "8d85254ac89fec732ac920f25674379ec68c0b63",
+    ".github/speedy-stats-action/src/utils/async.js": "9982d4239c4ab6096eb4a6ed603d90169ba01b63",
+    ".github/speedy-stats-action/src/utils/clone.js": "1012db9f350a5c15e2d1859531dc2ab6385dc21d",
+    ".github/speedy-stats-action/src/utils/emit.js": "668852261d620429cbf934a00311aed2e0d6f4d1",
+    ".github/speedy-stats-action/src/utils/exec.js": "dd9901cd97167c379cf5fb4dbf26ce679d8d8dc9",
+    ".github/speedy-stats-action/src/utils/get-dir-size.js": "254db7c4104ebc7a2e088e71cb890b622a627a97",
+    ".github/speedy-stats-action/src/utils/logger.js": "16349ecc8e456fde589199427e1c95552e906836",
+    ".github/speedy-stats-action/src/utils/pkg.js": "9503f1f4dea0fe9f17ff9bf9fe1b41e47f79f3e6",
+    ".github/speedy-stats-action/src/utils/rush-kits.js": "aaf4e203b69364deb12a94287d75dca29d596ccf",
+    ".github/speedy-stats-action/src/utils/speedy.js": "8d1c00f32548d489ad818abfce0827982d846604",
+    ".github/speedy-stats-action/src/utils/table.js": "506f9516a3379bc0bf7b94f77b8816fe33b312fd",
+    ".github/speedy-stats-action/test.js": "79ce865d164aac6eb52224372ce3c743a6b9c9cf"
+  },
+  "arguments": ""
+}
