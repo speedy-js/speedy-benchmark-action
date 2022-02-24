@@ -1,6 +1,8 @@
 import path from 'path'
 import { execSync } from 'child_process'
 
+import core from '@actions/core'
+
 import { logger } from '../utils'
 
 export default function getActionInfo () {
@@ -16,10 +18,12 @@ export default function getActionInfo () {
     GITHUB_REPOSITORY,
     GITHUB_EVENT_PATH,
     PR_STATS_COMMENT_TOKEN
-  } = process.env
+  } = process.env as { [key: string]: string }
 
   // only use custom endpoint if we don't have a token
   const commentEndpoint = !PR_STATS_COMMENT_TOKEN && COMMENT_ENDPOINT
+
+  const actionToken = process.env.ACTION_TOKEN
 
   if (LOCAL_STATS === 'true') {
     const cwd = process.cwd()
@@ -44,7 +48,7 @@ export default function getActionInfo () {
     commentEndpoint: commentEndpoint as any,
     skipClone: SKIP_CLONE,
     actionName: GITHUB_ACTION,
-    githubToken: PR_STATS_COMMENT_TOKEN,
+    githubToken: actionToken,
     customCommentEndpoint: !!commentEndpoint,
     gitRoot: GIT_ROOT_DIR || 'https://github.com/',
     prRepo: GITHUB_REPOSITORY,

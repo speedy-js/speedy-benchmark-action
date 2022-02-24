@@ -1,1 +1,1 @@
-# speedy-benchmark-action
+# Speedy Benchmark Action

@@ -1,5 +1,5 @@
 import { URL } from 'url'
-import { remove } from 'fs-extra'
+import fs from 'fs-extra'
 
 import { logger, exec, chainPromise } from '../utils'
 
@@ -9,17 +9,33 @@ export const repoSetup = (actionInfo) => {
 
   return {
     async cloneRepo (repoPath = '', dest = '') {
-      await remove(dest)
+      const exists = await fs.pathExists(dest)
+      if (exists) {
+        return console.warn(`Cannot clone into ${dest}, directory already exists`)
+      }
+      await fs.mkdirp(dest)
       await exec(`git clone ${gitRoot}${repoPath}.git ${dest}`)
     },
     async checkoutRef (ref = '', repoDir = '') {
+      const exists = await fs.pathExists(repoDir)
+      if (!exists) {
+        return console.warn('Repo dir does not exist: ', repoDir)
+      }
       await exec(`cd ${repoDir} && git fetch && git checkout ${ref}`)
     },
     async getCommitId (repoDir = '') {
+      const exists = await fs.pathExists(repoDir)
+      if (!exists) {
+        return console.warn('Repo dir does not exist: ', repoDir)
+      }
       const { stdout } = await exec(`cd ${repoDir} && git rev-parse HEAD`)
       return stdout.trim()
     },
     async resetToRef (ref = '', repoDir = '') {
+      const exists = await fs.pathExists(repoDir)
+      if (!exists) {
+        return console.warn('Repo dir does not exist: ', repoDir)
+      }
       await exec(`cd ${repoDir} && git reset --hard ${ref}`)
     },
     async mergeBranch (ref = '', origRepoDir = '', destRepoDir = '') {

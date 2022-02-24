@@ -1,5 +1,5 @@
 import { promisify } from 'util'
-import { exec as execOrig, spawn as spawnOrig } from 'child_process'
+import { exec as execOrig, spawn as spawnOrig, SpawnOptionsWithoutStdio } from 'child_process'
 
 import { logger } from './logger'
 
@@ -39,4 +39,39 @@ exec.spawn = function spawn (command = '', noLog = false, opts = {}) {
   return child
 }
 
-export { exec }
+async function runCommand (
+  cmd: string,
+  args?: Array<string>,
+  options?: SpawnOptionsWithoutStdio,
+  returnOutput?: boolean
+) {
+  const command = spawnOrig(cmd, args, options)
+
+  let output = ''
+  if (returnOutput) {
+    command.stdout.on('data', (c) => {
+      if (typeof c.toString !== 'undefined') {
+        output += c.toString()
+      }
+    })
+  }
+
+  command.stderr.pipe(process.stderr)
+  command.stdout.pipe(process.stdout)
+
+  await new Promise((resolve, reject) => {
+    command.once('close', (code) => {
+      if (code !== 0) {
+        const errorText = `command ${cmd} ${args && args.join(' ')} failed with status code ${code}.`
+        console.error(errorText)
+        return reject(errorText)
+      }
+
+      resolve(code)
+    })
+  })
+
+  return { stdout: output.trim() }
+}
+
+export { exec, runCommand }
