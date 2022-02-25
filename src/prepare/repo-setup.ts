@@ -1,7 +1,7 @@
 import { URL } from 'url'
 import fs from 'fs-extra'
 
-import { logger, exec, chainPromise } from '../utils'
+import { chainPromise, runCommand } from '../utils'
 
 export const repoSetup = (actionInfo) => {
   const gitRootUrl = new URL(actionInfo.gitRoot)
@@ -13,67 +13,60 @@ export const repoSetup = (actionInfo) => {
       if (exists) {
         return console.warn(`Cannot clone into ${dest}, directory already exists`)
       }
+      const repoUrl = `${gitRoot}${repoPath}.git`
       await fs.mkdirp(dest)
-      await exec(`git clone ${gitRoot}${repoPath}.git ${dest}`)
+      await runCommand('git', ['clone', repoUrl, dest])
     },
     async checkoutRef (ref = '', repoDir = '') {
       const exists = await fs.pathExists(repoDir)
       if (!exists) {
         return console.warn('Repo dir does not exist: ', repoDir)
       }
-      await exec(`cd ${repoDir} && git fetch && git checkout ${ref}`)
+      await runCommand('git', ['fetch'], {
+        cwd: repoDir
+      })
+      await runCommand('git', ['checkout', `${ref}`], {
+        cwd: repoDir
+      })
     },
     async getCommitId (repoDir = '') {
-      const exists = await fs.pathExists(repoDir)
-      if (!exists) {
-        return console.warn('Repo dir does not exist: ', repoDir)
-      }
-      const { stdout } = await exec(`cd ${repoDir} && git rev-parse HEAD`)
-      return stdout.trim()
+      const command = await runCommand(
+        'git',
+        ['rev-parse', 'HEAD'],
+        {
+          cwd: repoDir
+        },
+        true
+      )
+      return command.stdout
     },
     async resetToRef (ref = '', repoDir = '') {
       const exists = await fs.pathExists(repoDir)
       if (!exists) {
         return console.warn('Repo dir does not exist: ', repoDir)
       }
-      await exec(`cd ${repoDir} && git reset --hard ${ref}`)
-    },
-    async mergeBranch (ref = '', origRepoDir = '', destRepoDir = '') {
-      await exec(`cd ${destRepoDir} && git remote add upstream ${origRepoDir}`)
-      await exec(`cd ${destRepoDir} && git fetch upstream`)
-
-      try {
-        await exec(`cd ${destRepoDir} && git merge upstream/${ref}`)
-        logger('Auto merge of main branch successful')
-      } catch (err) {
-        logger.error('Failed to auto merge main branch:', err)
-
-        if (err.stdout && err.stdout.includes('CONFLICT')) {
-          await exec(`cd ${destRepoDir} && git merge --abort`)
-          logger('aborted auto merge')
-        }
-      }
+      await runCommand('git', ['reset', '--hard', ref], {
+        cwd: repoDir
+      })
     },
     async repoBootstrap (repoDir = '') {
-      await exec(`cd ${repoDir} && ./scripts/ci.sh install`, false, {
-        timeout: 5 * 60 * 1000
+      await runCommand('rush', ['install'], {
+        cwd: repoDir
       })
     },
-    async repoBuild (dir) {
-      const child = exec.spawn(`cd ${dir} && ./scripts/ci.sh build`, false, {
-        timeout: 10 * 60 * 1000
-      })
-
-      return new Promise((resolve) => {
-        child.on('close', resolve)
+    async repoBuild (repoDir: string) {
+      await runCommand('npm', ['run', 'build'], {
+        cwd: repoDir
       })
     },
-    async repoInstallDep (dir, depName) {
-      depName = Array.isArray(depName) ? depName : [depName]
+    async repoInstallDep (repoDir: string, depName: string | string[]) {
+      const normalizedDeps = Array.isArray(depName) ? depName : [depName]
 
       await chainPromise(
-        depName.map((name) => {
-          return async () => await exec(`cd ${dir} && rush add -p ${name} -m`)
+        normalizedDeps.map((name) => {
+          return async () => await runCommand('rush', ['add', '-p', name, '-m'], {
+            cwd: repoDir
+          })
         })
       )
     }

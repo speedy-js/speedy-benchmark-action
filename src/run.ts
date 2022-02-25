@@ -2,16 +2,22 @@ import path from 'path'
 import fs from 'fs-extra'
 import fetch from 'node-fetch'
 import urlJoin from 'url-join'
+import os from 'os'
 
 import { repoSetup } from './prepare/repo-setup'
 import getActionInfo from './prepare/action-info'
 
-import { RushKit, logger, getDirSize, chainPromise, getEntryPoint, emitAssets } from './utils'
+import { RushKit, logger, getDirSize, chainPromise, getEntryPoint, emitAssets, pnpmInstall, pnpmLink, Project } from './utils'
 import { SpeedyCIPluginInitialization } from './speedy/plugins'
+import { speedyPlugins as performancePluginsSpeedy, fixturePlugins as performancePluginsFixture } from './performance-plugins'
 
-import { REPO_BRANCH, TARGET_DIR, SOURCE_DIR, STAT_TYPE, REPO_NAME, REPO_OWNER } from './constants'
+import { REPO_BRANCH, STAT_TYPE, REPO_NAME, REPO_OWNER } from './constants'
 
 import { finalizer } from './finalizer'
+import { PerformancePluginFixture, PerformancePluginSpeedy } from './performance-plugins/base'
+import { BenchmarkConfig, FixtureBenchmark, SpeedyBenchmark } from './types'
+import { yarnLink, yarnUnlink } from './utils/yarn'
+import { compareFixtureBenchmarks, compareSpeedyBenchmarks } from './utils/compare-benchmarks'
 
 const actionInfo = getActionInfo()
 
@@ -268,7 +274,9 @@ const { repoBootstrap, repoBuild, repoInstallDep, cloneRepo, checkoutRef } = rep
 //   }
 // }
 
-async function setupSpeedy ({
+const tmpRoot = '/var/folders/7k/vj8hldbj0vx_psy70ml9b4qm0000gn/T1646041720890' || os.tmpdir() + Date.now()
+
+const setupSpeedy = async ({
   outputDir,
   repoUrl,
   branch
@@ -276,46 +284,229 @@ async function setupSpeedy ({
   outputDir: string
   repoUrl: string
   branch: string
-}) {
-  const speedyDir = path.join(outputDir, 'speedy')
-
+}) => {
   // Setup speedystack clone
-  await cloneRepo(repoUrl, outputDir)
-  await checkoutRef(branch, outputDir)
+  // await cloneRepo(repoUrl, outputDir)
+  // await checkoutRef(branch, outputDir)
 
   console.log(`Bootstrapping ${repoUrl}`)
-  await repoBootstrap(outputDir)
+  // await repoBootstrap(outputDir)
 
   console.log(`Building ${repoUrl}`)
-  await repoBuild(outputDir)
+  // await repoBuild(outputDir)
 
-  return RushKit.create(outputDir)
+  return RushKit.fromRushDir(outputDir)
+}
+
+const setupFixtureBenchmarks = async (opts: {
+  benchmarkDir: string
+  speedyPackages: RushKit
+}) => {
+  const { benchmarkDir, speedyPackages } = opts
+  const sourceBenchmarkDir = path.join(__dirname, '../', 'benchmarks', benchmarkDir)
+  const tmpBenchmarkDir = path.join(tmpRoot, `.tmp/${benchmarkDir.split('/').join('-')}-${Date.now()}`)
+
+  // Make a temporary benchmark copy
+  await fs.copy(sourceBenchmarkDir, tmpBenchmarkDir, { recursive: true })
+
+  // Use pnpm to install examples
+  await pnpmInstall(tmpBenchmarkDir)
+
+  const packageJSON = await import(path.join(tmpBenchmarkDir, 'package.json'))
+  const deps = { ...packageJSON.dependencies, ...packageJSON.devDependencies }
+  const speedyDeps = [
+    ...Object.keys(deps).filter((dep) => /^@speedy-js/.test(dep))
+  ]
+
+  // Link speedy packages to the temporary benchmark directory
+  const linkedDeps: {
+    pkgName: string
+    directory: string
+  }[] = []
+  for (const speedyDep of speedyDeps) {
+    await Object.values(speedyPackages.projects).flat()
+      .filter(p => p.packageName === speedyDep).reduce(async (prev, curr) => {
+          await prev
+          // Use yarn link as pnpm link would not recognize `workspaces:*` defined in other packages
+          console.log(`Linking ${curr.packageName} from ${curr.absoluteFolder} to ${tmpBenchmarkDir}`)
+
+          linkedDeps.push({
+            pkgName: curr.packageName,
+            directory: path.join(tmpBenchmarkDir)
+          })
+          try {
+            await yarnUnlink(curr.packageName)
+          } catch (err) {}
+          // Link it to global
+          await yarnLink(curr.absoluteFolder)
+          // Then link it to fixture
+          await yarnLink(tmpBenchmarkDir, curr.packageName)
+      }, Promise.resolve())
+  }
+
+  return { linkedDeps, tmpBenchmarkDir }
+}
+
+const cleanupBenchmarks = async (tmpDir: string, linkedDeps: {
+  pkgName: string
+  directory: string
+}[]) => {
+  for (const { pkgName, directory } of linkedDeps) {
+    console.log(`Unlinking ${pkgName} for ${directory}`)
+    await yarnUnlink(directory, pkgName)
+  }
+
+  await fs.remove(tmpDir)
+}
+
+const runFixtureBenchmarks = async <T extends {
+  new(): (InstanceType<typeof PerformancePluginFixture>)
+}>(opts: {
+  plugins: T[]
+  speedyPackages: RushKit
+  benchmarkConfig: BenchmarkConfig
+}): Promise<FixtureBenchmark[]> => {
+  const { plugins, speedyPackages, benchmarkConfig } = opts
+
+  const { linkedDeps, tmpBenchmarkDir } = await setupFixtureBenchmarks({
+    benchmarkDir: benchmarkConfig.directory,
+    speedyPackages
+  })
+
+  const pluginIds: string[] = []
+  const pluginInst = Array.from(new Set(plugins)).map(Ctor => new Ctor())
+  pluginInst.forEach(plugin => {
+      if (pluginIds.includes(plugin.id)) {
+        console.error(`Plugin ${plugin.id} already exists`)
+      }
+      pluginIds.push(plugin.id)
+  })
+
+  const fixtureBenchmarks = []
+
+  for (const plugin of pluginInst) {
+    const res = await plugin.runEach({
+      benchmarkConfig
+    })
+    if (res) {
+      fixtureBenchmarks.push({
+        ...res,
+        pluginId: plugin.id,
+        fixture: benchmarkConfig
+      })
+    }
+  }
+
+  // Do some cleanups
+  await cleanupBenchmarks(tmpBenchmarkDir, linkedDeps)
+
+  return fixtureBenchmarks
+}
+
+const runSpeedyBenchmarks = async <T extends {
+  new(): (InstanceType<typeof PerformancePluginSpeedy>)
+}>(opts: {
+  plugins: T[]
+  speedyPackages: RushKit
+}): Promise<SpeedyBenchmark[]> => {
+  const { plugins, speedyPackages } = opts
+
+  const pluginIds: string[] = []
+  const pluginInst = Array.from(new Set(plugins)).map(Ctor => new Ctor())
+  pluginInst.forEach(plugin => {
+    if (pluginIds.includes(plugin.id)) {
+      console.error(`Plugin ${plugin.id} already exists`)
+    }
+    pluginIds.push(plugin.id)
+  })
+
+  const speedyBenchmarks = []
+
+  for (const plugin of pluginInst) {
+      const pkgs = (await plugin.getPackages?.(speedyPackages.clone())) || speedyPackages.clone().projects
+
+    for (const pkg of Object.values(pkgs).flat()) {
+      const res = await plugin.runEach(pkg)
+
+      if (res) {
+        speedyBenchmarks.push({
+          ...res,
+          pluginId: plugin.id,
+          pkg
+        })
+      }
+    }
+  }
+  return speedyBenchmarks
 }
 
 const run = async () => {
   // Setup main copy of Speedy
-  const mainDir = path.join(process.cwd(), './tmp/main')
+  const mainDir = path.join(tmpRoot, '.tmp/main')
+  console.log(`Cleaning up ${mainDir}`)
+  // await fs.remove(mainDir)
+  console.log(`Cloning ${urlJoin(REPO_OWNER, REPO_NAME)}`)
   const mainSpeedyPackages = await setupSpeedy({
     outputDir: mainDir,
-    repoUrl: urlJoin(actionInfo.gitRoot, REPO_OWNER, REPO_NAME),
+    repoUrl: urlJoin(REPO_OWNER, REPO_NAME),
     branch: REPO_BRANCH
   })
 
   // Setup PR copy of Speedy
+  const prDir = path.join(tmpRoot, '.tmp/pr')
+  console.log(`Cleaning up ${prDir}`)
+  // await fs.remove(prDir)
   console.log(`Cloning ${actionInfo.prRepo}...`)
-  const prDir = path.join(process.cwd(), '.tmp/pr')
   const prSpeedyPackages = await setupSpeedy({
     outputDir: prDir,
-    repoUrl: urlJoin(actionInfo.gitRoot, actionInfo.prRepo),
+    repoUrl: actionInfo.prRepo,
     branch: actionInfo.prRef
   })
 
   // Run benchmarks
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const BENCHMARKS_CONFIG = require(path.join(__dirname, '../', 'benchmarks.json'))
 
-  // await cloneRepo(prRepo, TARGET_DIR);
-  // await checkoutRef(TARGET_BRANCH, TARGET_DIR);
-  // await repoBootstrap(TARGET_DIR);
-  await repoBuild(TARGET_DIR)
+  console.log('Benchmark config', JSON.stringify(BENCHMARKS_CONFIG, null, 4))
+
+  console.log('Running benchmarks for speedy packages on main branch...')
+  const mainSpeedyBenchmarks = await runSpeedyBenchmarks({
+    plugins: Object.values(performancePluginsSpeedy),
+    speedyPackages: mainSpeedyPackages
+  })
+
+  console.log('mainSpeedyBenchmarks', mainSpeedyBenchmarks)
+
+  const mainFixtureBenchmarks = []
+  for (const benchmarkConfig of BENCHMARKS_CONFIG) {
+    console.log(`Running ${benchmarkConfig.name} on main branch...`)
+    mainFixtureBenchmarks.push(await runFixtureBenchmarks({
+      plugins: Object.values(performancePluginsFixture) as [],
+      speedyPackages: mainSpeedyPackages,
+      benchmarkConfig
+    }))
+  }
+
+  console.log('Running benchmarks for speedy packages on pull request branch...')
+  const prSpeedyBenchmarks = await runSpeedyBenchmarks({
+    plugins: Object.values(performancePluginsSpeedy),
+    speedyPackages: prSpeedyPackages
+  })
+
+  const prFixtureBenchmarks = []
+  for (const benchmarkConfig of BENCHMARKS_CONFIG) {
+    console.log(`Running ${benchmarkConfig.name} on pull request branch...`)
+    prFixtureBenchmarks.push(await runFixtureBenchmarks({
+      plugins: Object.values(performancePluginsFixture) as [],
+      speedyPackages: prSpeedyPackages,
+      benchmarkConfig
+    }))
+  }
+
+  const speedyBenchmarksCompared = compareSpeedyBenchmarks(mainSpeedyBenchmarks, prSpeedyBenchmarks)
+  const fixtureBenchmarksCompared = compareFixtureBenchmarks(mainFixtureBenchmarks.flat(), prFixtureBenchmarks.flat())
+
+  console.log(speedyBenchmarksCompared)
 
   logger('running stats for current merge request...')
   // await runStats(SOURCE_DIR, TARGET_DIR)

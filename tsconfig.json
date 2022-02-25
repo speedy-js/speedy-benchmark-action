@@ -3,7 +3,10 @@
     "module": "ESNext",
     "target": "ESNext",
     "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "strict": true
-  }
+    "strict": true,
+    "resolveJsonModule": true
+  },
+  "exclude": ["benchmarks", "**/node_modules/**"]
 }

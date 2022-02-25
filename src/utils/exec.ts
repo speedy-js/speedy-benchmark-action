@@ -1,43 +1,4 @@
-import { promisify } from 'util'
-import { exec as execOrig, spawn as spawnOrig, SpawnOptionsWithoutStdio } from 'child_process'
-
-import { logger } from './logger'
-
-const execP = promisify(execOrig)
-const env = {
-  ...process.env
-}
-
-function exec (command, noLog = false, opts = {}) {
-  if (!noLog) logger(`exec: ${command}`)
-  return execP(command, {
-    timeout: 180 * 1000,
-    maxBuffer: 1024 * 1024 * 10,
-    ...opts,
-    env: { ...env, ...opts.env }
-  })
-}
-
-exec.spawn = function spawn (command = '', noLog = false, opts = {}) {
-  if (!noLog) logger(`spawn: ${command}`)
-  const exitOnError = opts.exitOnError ?? false
-  const child = spawnOrig('/bin/bash', ['-c', command], {
-    ...opts,
-    env: {
-      ...env,
-      ...opts.env
-    },
-    stdio: opts.stdio || 'inherit'
-  })
-
-  child.on('exit', (code, signal) => {
-    logger(`spawn exit (${code}, ${signal}): ${command}`)
-    if (exitOnError && code !== 0) {
-      process.exit(code)
-    }
-  })
-  return child
-}
+import { spawn, SpawnOptionsWithoutStdio } from 'child_process'
 
 async function runCommand (
   cmd: string,
@@ -45,7 +6,7 @@ async function runCommand (
   options?: SpawnOptionsWithoutStdio,
   returnOutput?: boolean
 ) {
-  const command = spawnOrig(cmd, args, options)
+  const command = spawn(cmd, args, options)
 
   let output = ''
   if (returnOutput) {
@@ -74,4 +35,4 @@ async function runCommand (
   return { stdout: output.trim() }
 }
 
-export { exec, runCommand }
+export { runCommand }

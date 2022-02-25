@@ -1,5 +1,5 @@
 import path from 'path'
-import rushLib from '@microsoft/rush-lib'
+import * as rushLib from '@microsoft/rush-lib'
 
 type ArrayType<T> = T extends (infer U)[] ? U : never
 
@@ -19,7 +19,9 @@ const getProjects = (configFile?: string) => {
   return normalized
 }
 
-type CategorizedProjects = { [categoryName: string]: ReturnType<typeof getProjects>}
+export type CategorizedProjects = { [categoryName: string]: ReturnType<typeof getProjects>}
+
+export type Project = ReturnType<typeof getProjects>[number];
 
 const getCategorizedProjects = (configFile?: string) => {
   return getProjects(configFile).reduce((categories, project) => {
@@ -37,8 +39,8 @@ const getCategorizedProjects = (configFile?: string) => {
 
 class RushKit {
   private pending: CategorizedProjects | null = null;
-  private projects: CategorizedProjects;
-  constructor (categorized: CategorizedProjects) {
+  public projects: CategorizedProjects;
+  constructor (categorized?: CategorizedProjects) {
     this.projects = categorized || {}
   }
 
@@ -86,7 +88,18 @@ class RushKit {
     return filtered
   }
 
-  static create (rushDir?: string) {
+  clone () {
+    const instance = new RushKit()
+    instance.pending = {
+      ...this.pending
+    }
+    instance.projects = {
+      ...this.projects
+    }
+    return instance
+  }
+
+  static fromRushDir (rushDir?: string) {
     return new this(getCategorizedProjects(rushDir ? path.join(rushDir, 'rush.json') : undefined))
   }
 }
