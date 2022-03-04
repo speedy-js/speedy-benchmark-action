@@ -10,7 +10,7 @@ import { speedyPlugins as performancePluginsSpeedy, fixturePlugins as performanc
 
 import { REPO_BRANCH, REPO_NAME, REPO_OWNER } from './constants'
 
-import { finalizer } from './finalizer/index'
+import { PullRequestFinalizer } from './finalizer/index'
 import { BenchmarkConfig, FixtureBenchmark, SpeedyBenchmark } from './types'
 
 // const runStats = async (sourceDir: string, targetDir: string) => {
@@ -319,6 +319,10 @@ const run = async () => {
 
   const speedyBenchmarksCompared = compareSpeedyBenchmarks(mainSpeedyBenchmarks, prSpeedyBenchmarks)
   const fixtureBenchmarksCompared = compareFixtureBenchmarks(mainFixtureBenchmarks.flat(), prFixtureBenchmarks.flat())
+
+  const pullRequest = new PullRequestFinalizer(speedyBenchmarksCompared, fixtureBenchmarksCompared)
+
+  await pullRequest.finalize()
 }
 
 export { run }

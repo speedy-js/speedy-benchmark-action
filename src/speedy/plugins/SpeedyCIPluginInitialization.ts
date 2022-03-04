@@ -6,7 +6,7 @@ function SpeedyCIPluginInitialization () {
   return {
     name: PLUGIN_NAME,
     apply (compiler: SpeedyBundler) {
-      console.log('Registered plugin')
+      console.log('Registered plugin: ' + PLUGIN_NAME)
 
       compiler.hooks.done.tapPromise(PLUGIN_NAME, async () => {
         await compiler.close()

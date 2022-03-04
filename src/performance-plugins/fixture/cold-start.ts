@@ -6,8 +6,8 @@ import { runCommand } from '../../utils'
 import { PerformancePluginFixture, PluginBenchmark, RunFixtureCtxt } from '../base'
 
 class ColdStartPlugin extends PerformancePluginFixture {
-  id = 'cold-start-plugin'
-  title = 'Cold start'
+  static id = 'cold-start-plugin'
+  static title = 'Cold start'
 
   async runEach ({ benchmarkConfig, tmpBenchmarkDir }: RunFixtureCtxt): Promise<PluginBenchmark | void> {
     const { name } = benchmarkConfig
