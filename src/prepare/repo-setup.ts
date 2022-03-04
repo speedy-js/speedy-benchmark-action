@@ -15,6 +15,8 @@ export const repoSetup = (info: typeof actionInfo) => {
         return console.warn(`Cannot clone into ${dest}, directory already exists`)
       }
       const repoUrl = `${gitRoot}${repoPath}.git`
+      console.log('Repo url', repoUrl)
+
       await fs.mkdirp(dest)
       await runCommand('git', ['clone', repoUrl, dest])
     },

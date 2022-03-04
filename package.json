@@ -8,10 +8,9 @@
   "scripts": {
     "test": "mocha __tests__/*.spec.js",
     "action-start": "suno index.ts",
-    "type-check": "tsc --noEmit"
+    "build": "tsc --noEmit"
   },
   "dependencies": {
-    "@actions/core": "^1.6.0",
     "@microsoft/rush-lib": "5.58.0",
     "fs-extra": "10.0.0",
     "node-fetch": "2.6.2",

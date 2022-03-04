@@ -8,7 +8,7 @@ class NodeModulesPlugin extends PerformancePluginSpeedy {
   static title = 'Node Modules Size'
 
   getPackages (rushKit: RushKit) {
-    return rushKit.filterCategory('packages').projects
+    return rushKit.filterCategory('packages').end()!
   }
 
   async runEach (project: Project): Promise<PluginBenchmark> {

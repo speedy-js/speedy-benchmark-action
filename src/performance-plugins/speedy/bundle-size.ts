@@ -6,7 +6,7 @@ class BundleSizePlugin extends PerformancePluginSpeedy {
   static title = 'Bundle Size'
 
   getPackages (rushKit: RushKit) {
-    return rushKit.filterCategory('packages').projects
+    return rushKit.filterCategory('packages').end()!
   }
 
   async runEach (project: Project): Promise<PluginBenchmark | void> {

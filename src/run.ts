@@ -4,6 +4,7 @@ import urlJoin from 'url-join'
 import os from 'os'
 
 import { actionInfo } from './prepare/action-info'
+import { repoBootstrap, repoBuild, cloneRepo, checkoutRef } from './prepare/repo-setup'
 
 import { RushKit, pnpmInstall, yarnLink, yarnUnlink, compareFixtureBenchmarks, compareSpeedyBenchmarks } from './utils'
 import { speedyPlugins as performancePluginsSpeedy, fixturePlugins as performancePluginsFixture, PerformancePluginFixture, PerformancePluginSpeedy } from './performance-plugins'
@@ -84,7 +85,7 @@ import { BenchmarkConfig, FixtureBenchmark, SpeedyBenchmark } from './types'
 //   }
 // }
 
-const tmpRoot = '/var/folders/7k/vj8hldbj0vx_psy70ml9b4qm0000gn/T1646041720890' || os.tmpdir() + Date.now()
+const tmpRoot = os.tmpdir() + Date.now()
 
 const setupSpeedy = async ({
   outputDir,
@@ -96,14 +97,14 @@ const setupSpeedy = async ({
   branch: string
 }) => {
   // Setup speedystack clone
-  // await cloneRepo(repoUrl, outputDir)
-  // await checkoutRef(branch, outputDir)
+  await cloneRepo(repoUrl, outputDir)
+  await checkoutRef(branch, outputDir)
 
   console.log(`Bootstrapping ${repoUrl}`)
-  // await repoBootstrap(outputDir)
+  await repoBootstrap(outputDir)
 
   console.log(`Building ${repoUrl}`)
-  // await repoBuild(outputDir)
+  await repoBuild(outputDir)
 
   return RushKit.fromRushDir(outputDir)
 }
