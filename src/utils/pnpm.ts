@@ -29,6 +29,19 @@ async function install (cwd: string) {
   })
 }
 
+async function add (cwd: string, pkgs: string[], { dev }: {
+  dev?: boolean
+} = { dev: false }) {
+  const exists = await fs.pathExists(cwd)
+  if (!exists) {
+    throw new Error(`Cannot install pnpm deps in ${cwd}, directory does not exist`)
+  }
+
+  return runCommand('pnpm', ['add', ...pkgs, dev ? '--save-dev' : ''], {
+    cwd
+  })
+}
+
 async function unlink (cwd: string, pkgName?: string) {
   const exists = await fs.pathExists(cwd)
   if (!exists) {
@@ -48,7 +61,8 @@ async function unlink (cwd: string, pkgName?: string) {
 const pnpm = {
   link,
   install,
+  add,
   unlink
 }
 
-export { link as pnpmLink, install as pnpmInstall, unlink as pnpmUnlink, pnpm }
+export { link as pnpmLink, install as pnpmInstall, unlink as pnpmUnlink, add as pnpmAdd, pnpm }

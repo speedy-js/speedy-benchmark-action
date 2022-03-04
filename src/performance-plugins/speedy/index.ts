@@ -1,2 +1,2 @@
-export * from './NodeModules'
-export * from './BundleSize'
+export * from './node-modules'
+export * from './bundle-size'

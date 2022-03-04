@@ -1,11 +1,12 @@
 import { URL } from 'url'
 import fs from 'fs-extra'
 
+import { actionInfo } from '../prepare/action-info'
 import { chainPromise, runCommand } from '../utils'
 
-export const repoSetup = (actionInfo) => {
-  const gitRootUrl = new URL(actionInfo.gitRoot)
-  const gitRoot = `${gitRootUrl.protocol}//${actionInfo.githubToken}@${gitRootUrl.host}/`
+export const repoSetup = (info: typeof actionInfo) => {
+  const gitRootUrl = new URL(info.gitRoot)
+  const gitRoot = `${gitRootUrl.protocol}//${info.githubToken}@${gitRootUrl.host}/`
 
   return {
     async cloneRepo (repoPath = '', dest = '') {
@@ -72,3 +73,7 @@ export const repoSetup = (actionInfo) => {
     }
   }
 }
+
+const { repoBootstrap, repoBuild, repoInstallDep, cloneRepo, checkoutRef } = repoSetup(actionInfo)
+
+export { repoBootstrap, repoBuild, repoInstallDep, cloneRepo, checkoutRef }

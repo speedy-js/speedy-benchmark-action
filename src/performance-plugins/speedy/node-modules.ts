@@ -4,8 +4,8 @@ import { getDirSize, RushKit } from '../../utils'
 import { PerformancePluginSpeedy, PluginBenchmark, Project } from '../base'
 
 class NodeModulesPlugin extends PerformancePluginSpeedy {
-  id = 'node-modules-plugin'
-  title = 'Node Modules Size'
+  static id = 'node-modules-plugin'
+  static title = 'Node Modules Size'
 
   getPackages (rushKit: RushKit) {
     return rushKit.filterCategory('packages').projects

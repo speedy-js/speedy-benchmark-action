@@ -1,207 +1,17 @@
 import path from 'path'
 import fs from 'fs-extra'
-import fetch from 'node-fetch'
 import urlJoin from 'url-join'
 import os from 'os'
 
-import { repoSetup } from './prepare/repo-setup'
-import getActionInfo from './prepare/action-info'
+import { actionInfo } from './prepare/action-info'
 
-import { RushKit, logger, getDirSize, chainPromise, getEntryPoint, emitAssets, pnpmInstall, pnpmLink, Project } from './utils'
-import { SpeedyCIPluginInitialization } from './speedy/plugins'
-import { speedyPlugins as performancePluginsSpeedy, fixturePlugins as performancePluginsFixture } from './performance-plugins'
+import { RushKit, pnpmInstall, yarnLink, yarnUnlink, compareFixtureBenchmarks, compareSpeedyBenchmarks } from './utils'
+import { speedyPlugins as performancePluginsSpeedy, fixturePlugins as performancePluginsFixture, PerformancePluginFixture, PerformancePluginSpeedy } from './performance-plugins'
 
-import { REPO_BRANCH, STAT_TYPE, REPO_NAME, REPO_OWNER } from './constants'
+import { REPO_BRANCH, REPO_NAME, REPO_OWNER } from './constants'
 
-import { finalizer } from './finalizer'
-import { PerformancePluginFixture, PerformancePluginSpeedy } from './performance-plugins/base'
+import { finalizer } from './finalizer/index'
 import { BenchmarkConfig, FixtureBenchmark, SpeedyBenchmark } from './types'
-import { yarnLink, yarnUnlink } from './utils/yarn'
-import { compareFixtureBenchmarks, compareSpeedyBenchmarks } from './utils/compare-benchmarks'
-
-const actionInfo = getActionInfo()
-
-const { repoBootstrap, repoBuild, repoInstallDep, cloneRepo, checkoutRef } = repoSetup(actionInfo)
-
-// const NODE_MODULES_TEST_FOLDERS = ['packages', 'tools', 'private-packages']
-
-// /**
-//  * Run nodeModules stats
-//  * @param {RushKit} sourceCategory
-//  * @param {RushKit} targetCategory
-//  */
-// const runNodeModulesStats = async (sourceCategory, targetCategory) => {
-//   const sourceCat = sourceCategory.filterCategory(NODE_MODULES_TEST_FOLDERS).end()
-//   const targetCat = targetCategory.filterCategory(NODE_MODULES_TEST_FOLDERS).end()
-
-//   const nodeModulesStats = {
-//     stat: {},
-//     type: STAT_TYPE.NODE_MODULES_STATS,
-//     title: 'Node Modules Stats'
-//   }
-
-//   logger('generating nodeModules stats...')
-
-//   const getEach = async (source, result, isSource) => {
-//     for (const [catName, pkgs] of Object.entries(source)) {
-//       result[catName] = result[catName] || {}
-
-//       await Promise.all(
-//         pkgs.map(async (pkg) => {
-//           const packageResult = (result[catName][pkg.packageName] = result[catName][pkg.packageName] || [])
-
-//           const size = await getDirSize(pkg.absoluteFolder)
-//           logger(`${pkg.packageName}`)
-//           logger(`   size: ${size}`)
-
-//           // [target, source]
-//           if (isSource) {
-//             packageResult[1] = [pkg, size]
-//           } else {
-//             packageResult[0] = [pkg, size]
-//           }
-//         })
-//       )
-//     }
-//   }
-
-//   await Promise.all([
-//     getEach(targetCat, nodeModulesStats.stat, false),
-//     getEach(sourceCat, nodeModulesStats.stat, true)
-//   ])
-
-//   return nodeModulesStats
-// }
-
-// /**
-//  * Run nodeModules stats
-//  * @param {RushKit} sourceCategory
-//  * @param {RushKit} targetCategory
-//  */
-// const runBundleSizeStatus = async (sourceCategory, targetCategory) => {
-//   const sourceCat = sourceCategory.filterCategory(NODE_MODULES_TEST_FOLDERS).end()
-//   const targetCat = targetCategory.filterCategory(NODE_MODULES_TEST_FOLDERS).end()
-
-//   const bundleSizeStats = {
-//     stat: {},
-//     type: STAT_TYPE.BUNDLE_SIZE_STATS,
-//     title: 'Bundle Size Stats'
-//   }
-
-//   logger('generating bundleSize stats...')
-
-//   const getEach = async (source, result, isSource) => {
-//     for (const [catName, pkgs] of Object.entries(source)) {
-//       result[catName] = result[catName] || []
-
-//       await Promise.all(
-//         pkgs.map(async (pkg) => {
-//           const packageResult = (result[catName][pkg.packageName] = result[catName][pkg.packageName] || [])
-
-//           const entryPoint = await getEntryPoint(pkg.absoluteFolder)
-
-//           if (!entryPoint) {
-//             return
-//           }
-
-//           const size = await getDirSize(entryPoint)
-//           logger(`${pkg.packageName}`)
-//           logger(`   entryPoint: ${entryPoint}`)
-//           logger(`   size: ${size}`)
-
-//           // [target, source]
-//           if (isSource) {
-//             packageResult[1] = [pkg, size]
-//           } else {
-//             packageResult[0] = [pkg, size]
-//           }
-//         })
-//       )
-//     }
-//   }
-
-//   await Promise.all([getEach(targetCat, bundleSizeStats.stat, false), getEach(sourceCat, bundleSizeStats.stat, true)])
-
-//   return bundleSizeStats
-// }
-
-// const runSpeedyCoreCodeStartStats = async (sourceCategory, targetCategory) => {
-//   const sourceCat = sourceCategory.filterCategory(['examples']).end()
-//   const targetCat = targetCategory.filterCategory(['examples']).end()
-
-//   const speedyCoreCodeStartStats = {
-//     stat: {},
-//     type: STAT_TYPE.SPEEDY_CORE_COLD_START_STATS,
-//     title: 'Speedy Cold Start Stats'
-//   }
-
-//   logger('generating speedyCoreColdStart stats...')
-
-//   const getEach = async (source, result, isSource) => {
-//     const currentDir = process.cwd()
-//     for (const [catName, pkgs] of Object.entries(source)) {
-//       result[catName] = result[catName] || []
-
-//       await chainPromise(
-//         pkgs.map((pkg) => {
-//           const packageResult = (result[catName][pkg.packageName] = result[catName][pkg.packageName] || [])
-
-//           const configPath = path.join(pkg.absoluteFolder, 'speedy.config.ts')
-
-//           if (!fs.existsSync(configPath)) {
-//             logger.warn('Unable to find speedy config file for package: %s, at %s', pkg.packageName, configPath)
-//             return () => Promise.resolve()
-//           }
-
-//           return async () => {
-//             await repoInstallDep(pkg.absoluteFolder, ['sass'])
-//             process.chdir(pkg.absoluteFolder)
-
-//             const startTime = Date.now()
-//             const endTime = await new Promise(async (resolve) => {
-//               // eslint-disable-next-line @typescript-eslint/no-var-requires
-//               const Speedy = require(require.resolve('@speedy-js/speedy-core', {
-//                 paths: [pkg.absoluteFolder]
-//               }))
-
-//               Speedy.SpeedyBundler.create({
-//                 root: pkg.absoluteFolder,
-//                 configFile: configPath,
-//                 command: 'serve',
-//                 plugins: [Speedy.devPlugin(), SpeedyCIPluginInitialization(resolve)]
-//               }).then((bundler) => {
-//                 bundler.build()
-//               })
-//             }).then((compiler) => {
-//               compiler.close()
-//               compiler.hooks.shutdown.promise()
-//               return Date.now()
-//             })
-
-//             process.chdir(currentDir)
-
-//             logger(pkg.packageName)
-//             logger('   cold start time: %s', endTime - startTime)
-
-//             // [target, source]
-//             if (isSource) {
-//               packageResult[1] = [pkg, startTime, endTime]
-//             } else {
-//               packageResult[0] = [pkg, startTime, endTime]
-//             }
-//           }
-//         })
-//       )
-//     }
-//   }
-
-//   await chainPromise([
-//     () => getEach(targetCat, speedyCoreCodeStartStats.stat, false),
-//     () => getEach(sourceCat, speedyCoreCodeStartStats.stat, true)
-//   ])
-
-//   return speedyCoreCodeStartStats
-// }
 
 // const runStats = async (sourceDir: string, targetDir: string) => {
 //   const sourceCategory = RushKit.create(sourceDir)
@@ -376,22 +186,24 @@ const runFixtureBenchmarks = async <T extends {
   const pluginIds: string[] = []
   const pluginInst = Array.from(new Set(plugins)).map(Ctor => new Ctor())
   pluginInst.forEach(plugin => {
-      if (pluginIds.includes(plugin.id)) {
-        console.error(`Plugin ${plugin.id} already exists`)
-      }
-      pluginIds.push(plugin.id)
+    const pluginId = (plugin.constructor as typeof PerformancePluginFixture).id
+    if (pluginIds.includes(pluginId)) {
+      console.error(`Plugin ${pluginId} already exists`)
+    }
+    pluginIds.push(pluginId)
   })
 
   const fixtureBenchmarks = []
 
   for (const plugin of pluginInst) {
     const res = await plugin.runEach({
-      benchmarkConfig
+      benchmarkConfig,
+      tmpBenchmarkDir
     })
     if (res) {
       fixtureBenchmarks.push({
         ...res,
-        pluginId: plugin.id,
+        pluginId: (plugin.constructor as typeof PerformancePluginFixture).id,
         fixture: benchmarkConfig
       })
     }
@@ -414,10 +226,11 @@ const runSpeedyBenchmarks = async <T extends {
   const pluginIds: string[] = []
   const pluginInst = Array.from(new Set(plugins)).map(Ctor => new Ctor())
   pluginInst.forEach(plugin => {
-    if (pluginIds.includes(plugin.id)) {
-      console.error(`Plugin ${plugin.id} already exists`)
+    const pluginId = (plugin.constructor as typeof PerformancePluginSpeedy).id
+    if (pluginIds.includes(pluginId)) {
+      console.error(`Plugin ${pluginId} already exists`)
     }
-    pluginIds.push(plugin.id)
+    pluginIds.push(pluginId)
   })
 
   const speedyBenchmarks = []
@@ -427,11 +240,12 @@ const runSpeedyBenchmarks = async <T extends {
 
     for (const pkg of Object.values(pkgs).flat()) {
       const res = await plugin.runEach(pkg)
+      const pluginId = (plugin.constructor as typeof PerformancePluginSpeedy).id
 
       if (res) {
         speedyBenchmarks.push({
           ...res,
-          pluginId: plugin.id,
+          pluginId,
           pkg
         })
       }
@@ -505,11 +319,6 @@ const run = async () => {
 
   const speedyBenchmarksCompared = compareSpeedyBenchmarks(mainSpeedyBenchmarks, prSpeedyBenchmarks)
   const fixtureBenchmarksCompared = compareFixtureBenchmarks(mainFixtureBenchmarks.flat(), prFixtureBenchmarks.flat())
-
-  console.log(speedyBenchmarksCompared)
-
-  logger('running stats for current merge request...')
-  // await runStats(SOURCE_DIR, TARGET_DIR)
 }
 
 export { run }

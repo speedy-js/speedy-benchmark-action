@@ -1,11 +1,9 @@
-import path from 'path'
-
 import { getDirSize, RushKit, getEntryPoint } from '../../utils'
 import { PerformancePluginSpeedy, PluginBenchmark, Project } from '../base'
 
 class BundleSizePlugin extends PerformancePluginSpeedy {
-  id = 'bundle-size-plugin'
-  title = 'Bundle Size'
+  static id = 'bundle-size-plugin'
+  static title = 'Bundle Size'
 
   getPackages (rushKit: RushKit) {
     return rushKit.filterCategory('packages').projects

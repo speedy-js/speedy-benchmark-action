@@ -92,3 +92,5 @@ export default function getActionInfo () {
 
   return info
 }
+
+export const actionInfo = getActionInfo()

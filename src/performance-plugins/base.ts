@@ -32,23 +32,29 @@ export interface RunSpeedyCtxt {
 
 export interface RunFixtureCtxt {
   benchmarkConfig: BenchmarkConfig
+  tmpBenchmarkDir: string
 }
 
-interface PerformancePluginBase{
-  id: string
+export type PluginSpeedyFinalize = () => {
   title: string
+  columns: string[]
+  data: string[]
 }
 
-abstract class PerformancePluginSpeedy implements PerformancePluginBase {
-  abstract id: string
-  abstract title: string
+abstract class PerformancePluginSpeedy {
+  static id: string
+  static title: string
+  static finalize: PluginSpeedyFinalize
   abstract getPackages(speedyPackages: RushKit): CategorizedProjects
   abstract runEach(project: Project): Promise<PluginBenchmark | void>
 }
 
-abstract class PerformancePluginFixture implements PerformancePluginBase {
-  abstract id: string
-  abstract title: string
+export type PluginFixtureFinalize = () => void
+
+abstract class PerformancePluginFixture {
+  static id: string
+  static title: string
+  static finalize: PluginFixtureFinalize
   abstract runEach(ctxt: RunFixtureCtxt): Promise<PluginBenchmark | void>
 }
 

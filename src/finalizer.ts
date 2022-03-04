@@ -1,3 +1,6 @@
+// @ts-nocheck
+
+// for archive only
 // TODO: optimization render
 import prettyBytes from 'pretty-bytes'
 import prettyMs from 'pretty-ms'

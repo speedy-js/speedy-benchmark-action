@@ -66,10 +66,10 @@ function categorizeSpeedyBenchmark (mainBenchmarks: SpeedyBenchmark[], prBenchma
   return categorized
 }
 
-type SpeedyBenchmarkCompared = {
+export type SpeedyBenchmarkCompared = {
   [pluginId: string]: {
     /* comparedMetric will skip if either of raw benchmarks not exist */
-    metricCompared: MetricComparison[] | null
+    metricsCmped: MetricComparison[] | null
     raw: [main: SpeedyBenchmark | null, pr: SpeedyBenchmark | null]
     pkg: Project
     pluginId: string
@@ -83,7 +83,7 @@ const compareSpeedyBenchmarks = (mainBenchmarks: SpeedyBenchmark[], prBenchmarks
   for (const [pluginId, catedBenchmarks] of Object.entries(categorized)) {
     compared[pluginId] = catedBenchmarks.reduce<SpeedyBenchmarkCompared[keyof SpeedyBenchmarkCompared]>((acc, item) => {
       return [...acc, {
-        metricCompared: item[0] && item[1] ? compareSpeedyBenchmark(item[0], item[1]) : null,
+        metricsCmped: item[0] && item[1] ? compareSpeedyBenchmark(item[0], item[1]) : null,
         raw: item,
         /* At least either of them would exist */
         pkg: (item[0]?.pkg || item[1]?.pkg)!,
@@ -95,10 +95,10 @@ const compareSpeedyBenchmarks = (mainBenchmarks: SpeedyBenchmark[], prBenchmarks
   return compared
 }
 
-type FixtureBenchmarkCompared = {
+export type FixtureBenchmarkCompared = {
   [pluginId: string]: {
     /* comparedMetric will skip if either of raw benchmarks not exist */
-    metricCompared: MetricComparison[] | null
+    metricsCmped: MetricComparison[] | null
     raw: [main: FixtureBenchmark | null, pr: FixtureBenchmark | null]
     fixture: BenchmarkConfig
     pluginId: string
@@ -147,7 +147,7 @@ const compareFixtureBenchmarks = (mainBenchmarks: FixtureBenchmark[], prBenchmar
   for (const [pluginId, catedBenchmarks] of Object.entries(categorized)) {
     compared[pluginId] = catedBenchmarks.reduce<FixtureBenchmarkCompared[keyof FixtureBenchmarkCompared]>((acc, item) => {
       return [...acc, {
-        metricCompared: item[0] && item[1] ? compareFixtureBenchmark(item[0], item[1]) : null,
+        metricsCmped: item[0] && item[1] ? compareFixtureBenchmark(item[0], item[1]) : null,
         raw: item,
         /* At least either of them would exist */
         fixture: (item[0]?.fixture || item[1]?.fixture)!,
