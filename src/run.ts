@@ -14,78 +14,7 @@ import { REPO_BRANCH, REPO_NAME, REPO_OWNER } from './constants'
 import { PullRequestFinalizer } from './finalizer/index'
 import { BenchmarkConfig, FixtureBenchmark, SpeedyBenchmark } from './types'
 
-// const runStats = async (sourceDir: string, targetDir: string) => {
-//   const sourceCategory = RushKit.create(sourceDir)
-//   const targetCategory = RushKit.create(targetDir)
-
-//   const nodeModulesStats = await runNodeModulesStats(sourceCategory, targetCategory)
-//   const bundleSizeStats = await runBundleSizeStatus(sourceCategory, targetCategory)
-//   const speedyCoreCodeStartStats = await runSpeedyCoreCodeStartStats(sourceCategory, targetCategory)
-
-//   const result = await finalizer([speedyCoreCodeStartStats, bundleSizeStats, nodeModulesStats])
-
-//   logger(`finalized result:\n\n${JSON.stringify(result, null, 2)}`)
-
-//   await wrapReport(result)
-// }
-
-// const wrapReport = async (result) => {
-//   const { result: summary, warn } = result
-
-//   logger('Emitting report for CI...')
-
-//   if (actionInfo.customCommentEndpoint || (actionInfo.githubToken && actionInfo.commentEndpoint)) {
-//     logger(`Posting results to ${actionInfo.commentEndpoint}`)
-
-//     const body = {
-//       body: summary,
-//       ...(!actionInfo.githubToken
-//         ? {
-//             isRelease: actionInfo.isRelease,
-//             commitId: actionInfo.commitId,
-//             issueId: actionInfo.issueId
-//           }
-//         : {})
-//     }
-
-//     if (actionInfo.customCommentEndpoint) {
-//       logger(`Using body ${JSON.stringify({ ...body, body: 'OMITTED' })}`)
-//     }
-
-//     try {
-//       const res = await fetch(actionInfo.commentEndpoint, {
-//         method: 'POST',
-//         headers: {
-//           ...(actionInfo.githubToken
-//             ? {
-//                 Authorization: `bearer ${actionInfo.githubToken}`
-//               }
-//             : {
-//                 'content-type': 'application/json'
-//               })
-//         },
-//         body: JSON.stringify(body)
-//       })
-
-//       if (!res.ok) {
-//         logger.error(`Failed to post results ${res.status}`)
-//         try {
-//           logger.error(await res.text())
-//         } catch (_) {
-//           /* no-op */
-//         }
-//       } else {
-//         logger('Successfully posted results')
-//       }
-//     } catch (err) {
-//       logger.error('Error occurred posting results', err)
-//     }
-//   } else {
-//     logger('Not posting results', actionInfo.githubToken ? 'No comment endpoint' : 'no GitHub token')
-//   }
-// }
-
-const tmpRoot = os.tmpdir() + Date.now()
+export const tmpRoot = process.env.BENCHMARK_WORKING_DIR || os.tmpdir() + Date.now()
 
 const setupSpeedy = async ({
   outputDir,
@@ -97,14 +26,14 @@ const setupSpeedy = async ({
   branch: string
 }) => {
   // Setup speedystack clone
-  await cloneRepo(repoUrl, outputDir)
-  await checkoutRef(branch, outputDir)
+  // await cloneRepo(repoUrl, outputDir)
+  // await checkoutRef(branch, outputDir)
 
   console.log(`Bootstrapping ${repoUrl}`)
-  await repoBootstrap(outputDir)
+  // await repoBootstrap(outputDir)
 
   console.log(`Building ${repoUrl}`)
-  await repoBuild(outputDir)
+  // await repoBuild(outputDir)
 
   return RushKit.fromRushDir(outputDir)
 }

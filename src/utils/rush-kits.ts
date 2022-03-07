@@ -90,9 +90,7 @@ class RushKit {
 
   clone () {
     const instance = new RushKit()
-    instance.pending = {
-      ...this.pending
-    }
+    instance.pending = null
     instance.projects = {
       ...this.projects
     }

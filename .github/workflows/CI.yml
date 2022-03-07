@@ -27,4 +27,4 @@ jobs:
         run: pnpm install --frozen-lockfile --registry https://registry.npmjs.org
 
       - name: Type Check
-        run: pnpm type-check
+        run: pnpm build
