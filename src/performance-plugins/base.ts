@@ -1,12 +1,15 @@
+import fs from 'fs-extra'
+import path from 'path'
+
 import { BenchmarkConfig, MergeIntersection } from '../types'
-import { CategorizedProjects, RushKit, Project } from '../utils'
+import { CategorizedProjects, RushKit, Project, runCommand } from '../utils'
 
 export interface MetricNumber {
   value: number
   format: 'ms' | 'bytes'
 }
 
-// currently we do not support string metrics
+// Metrics for markdown
 export interface MetricString {
   value: string
 }
@@ -56,6 +59,23 @@ abstract class PerformancePluginFixture {
   static title: string
   static finalize: PluginFixtureFinalize
   abstract runEach(ctxt: RunFixtureCtxt): Promise<PluginBenchmark | void>
+  checkFixtureStatus ({ tmpBenchmarkDir }: RunFixtureCtxt) {
+    const configPath = path.join(tmpBenchmarkDir, 'speedy.config.ts')
+
+    if (!fs.existsSync(configPath)) {
+      console.warn('Unable to find speedy config file for package: %s, at %s', name, configPath)
+    }
+
+    return {
+      configPath
+    }
+  }
+
+  runSpeedy (cwd: string, command: 'dev' | 'build', args: string[] = []) {
+    return runCommand(`${cwd}/node_modules/.bin/speedy`, [command, ...args], {
+      cwd: cwd
+    })
+  }
 }
 
 export { PerformancePluginFixture, PerformancePluginSpeedy, Project }

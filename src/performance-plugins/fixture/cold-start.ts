@@ -20,15 +20,12 @@ class ColdStartPlugin extends PerformancePluginFixture {
 
     const speedyConfig = new SpeedyConfig(configPath)
 
-    speedyConfig
+    await speedyConfig
       .addPlugin(`import { SpeedyCIPluginInitialization } from "${path.resolve(__dirname, '../../speedy/plugins/SpeedyCIPluginInitialization')}"`, 'SpeedyCIPluginInitialization()')
       .write()
 
     const startTime = Date.now()
-
-    await runCommand('speedy', ['dev'], {
-      cwd: tmpBenchmarkDir
-    })
+    await this.runSpeedy(tmpBenchmarkDir, 'dev')
     const endTime = Date.now()
 
     speedyConfig.restore()

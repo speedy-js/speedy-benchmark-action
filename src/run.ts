@@ -44,13 +44,13 @@ const setupFixtureBenchmarks = async (opts: {
 }) => {
   const { benchmarkDir, speedyPackages } = opts
   const sourceBenchmarkDir = path.join(__dirname, '../', 'benchmarks', benchmarkDir)
-  const tmpBenchmarkDir = path.join(tmpRoot, `.tmp/${benchmarkDir.split('/').join('-')}-${Date.now()}`)
+  const tmpBenchmarkDir = '/var/folders/7k/vj8hldbj0vx_psy70ml9b4qm0000gn/T1646647198101/.tmp/apps-arco-pro-1646727859712' || path.join(tmpRoot, `.tmp/${benchmarkDir.split('/').join('-')}-${Date.now()}`)
 
   // Make a temporary benchmark copy
-  await fs.copy(sourceBenchmarkDir, tmpBenchmarkDir, { recursive: true })
+  // await fs.copy(sourceBenchmarkDir, tmpBenchmarkDir, { recursive: true })
 
   // Use pnpm to install examples
-  await pnpmInstall(tmpBenchmarkDir)
+  // await pnpmInstall(tmpBenchmarkDir)
 
   const packageJSON = await import(path.join(tmpBenchmarkDir, 'package.json'))
   const deps = { ...packageJSON.dependencies, ...packageJSON.devDependencies }
