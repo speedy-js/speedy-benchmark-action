@@ -2,7 +2,6 @@ import fs from 'fs-extra'
 import path from 'path'
 
 import { SpeedyConfig } from '../../speedy/utils'
-import { runCommand } from '../../utils'
 import { PerformancePluginFixture, PluginBenchmark, RunFixtureCtxt } from '../base'
 
 class ColdStartPlugin extends PerformancePluginFixture {

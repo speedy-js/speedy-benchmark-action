@@ -1,7 +1,7 @@
 import path from 'path'
 import { execSync } from 'child_process'
 
-import { logger } from '../utils'
+import { logger, getLastCommitId } from '../utils'
 
 export default function getActionInfo () {
   let {

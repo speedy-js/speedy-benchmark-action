@@ -4,7 +4,10 @@ import fs from 'fs-extra'
 import { actionInfo } from '../prepare/action-info'
 import { chainPromise, runCommand } from '../utils'
 
-export const repoSetup = (info: typeof actionInfo) => {
+export const repoSetup = (info: {
+  gitRoot: string
+  githubToken: string
+}) => {
   const gitRootUrl = new URL(info.gitRoot)
   const gitRoot = `${gitRootUrl.protocol}//${info.githubToken}@${gitRootUrl.host}/`
 
@@ -32,23 +35,32 @@ export const repoSetup = (info: typeof actionInfo) => {
         cwd: repoDir
       })
     },
-    async getCommitId (repoDir = '') {
-      const command = await runCommand(
-        'git',
-        ['rev-parse', 'HEAD'],
-        {
-          cwd: repoDir
-        },
-        true
-      )
-      return command.stdout
-    },
-    async resetToRef (ref = '', repoDir = '') {
+    async pull (ref = '', repoDir = '') {
       const exists = await fs.pathExists(repoDir)
       if (!exists) {
         return console.warn('Repo dir does not exist: ', repoDir)
       }
-      await runCommand('git', ['reset', '--hard', ref], {
+      await runCommand('git', ['pull', 'origin', `${ref}`], {
+        cwd: repoDir
+      })
+    },
+    async push (ref = '', repoPath: string, repoDir = '') {
+      const exists = await fs.pathExists(repoDir)
+      if (!exists) {
+        return console.warn('Repo dir does not exist: ', repoDir)
+      }
+      const repoUrl = `${gitRoot}${repoPath}.git`
+      await runCommand('git', ['push', repoUrl, `${ref}`, '--no-verify'], {
+        cwd: repoDir
+      })
+    },
+    async resetToRef (ref = '', repoPath: string, repoDir = '') {
+      const exists = await fs.pathExists(repoDir)
+      if (!exists) {
+        return console.warn('Repo dir does not exist: ', repoDir)
+      }
+      const repoUrl = `${gitRoot}${repoPath}.git`
+      await runCommand('git', ['reset', repoUrl, '--hard', ref], {
         cwd: repoDir
       })
     },
