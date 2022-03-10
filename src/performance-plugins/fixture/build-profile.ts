@@ -2,7 +2,6 @@ import path from 'path'
 import fs from 'fs-extra'
 
 import { SpeedyConfig } from '../../speedy/utils'
-import { actionInfo } from '../../prepare/action-info'
 import { PerformancePluginFixture, PluginBenchmark, RunFixtureCtxt } from '../base'
 import { getLastCommitId, writeProfileToGitHubWithRetry } from '../../utils'
 

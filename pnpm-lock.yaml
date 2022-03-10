@@ -11,6 +11,7 @@ specifiers:
   '@types/node': ^17.0.20
   '@types/url-join': ^4.0.1
   chai: 4.3.4
+  esbuild-register: ^3.3.2
   eslint: 7.30.0
   fs-extra: 10.0.0
   mocha: 9.1.3
@@ -26,6 +27,7 @@ dependencies:
   '@actions/exec': 1.1.0
   '@actions/github': 5.0.0
   '@microsoft/rush-lib': 5.58.0
+  esbuild-register: 3.3.2
   fs-extra: 10.0.0
   node-fetch: 2.6.2
   pretty-bytes: 5.6.0
@@ -1599,6 +1601,12 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /esbuild-register/3.3.2:
+    resolution: {integrity: sha512-jceAtTO6zxPmCfSD5cBb3rgIK1vmuqCKYwgylHiS1BF4pq0jJiJb4K2QMuqF4BEw7XDBRatYzip0upyTzfkgsQ==}
+    peerDependencies:
+      esbuild: '>=0.12 <1'
+    dev: false
 
   /esbuild-sunos-64/0.14.23:
     resolution: {integrity: sha512-hAzeBeET0+SbScknPzS2LBY6FVDpgE+CsHSpe6CEoR51PApdn2IB0SyJX7vGelXzlyrnorM4CAsRyb9Qev4h9g==}

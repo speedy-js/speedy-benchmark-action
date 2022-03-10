@@ -9,7 +9,7 @@ export const repoSetup = (info: {
   githubToken: string
 }) => {
   const gitRootUrl = new URL(info.gitRoot)
-  const gitRoot = `${gitRootUrl.protocol}//${info.githubToken}@${gitRootUrl.host}/`
+  const gitRoot = `${gitRootUrl.protocol}//${info.githubToken ? `${info.githubToken}@` : ''}${gitRootUrl.host}/`
 
   return {
     async cloneRepo (repoPath = '', dest = '') {

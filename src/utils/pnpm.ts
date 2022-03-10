@@ -1,6 +1,6 @@
 import fs from 'fs-extra'
 
-import { runCommand } from '../utils'
+import { runCommand } from '../utils/exec'
 
 async function link (cwd: string, pkgName?: string) {
   const exists = await fs.pathExists(cwd)

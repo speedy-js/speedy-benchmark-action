@@ -1,3 +1,3 @@
-export * as speedyPlugins from './speedy'
-export * as fixturePlugins from './fixture'
+export { speedyPlugins } from './speedy'
+export { fixturePlugins } from './fixture'
 export * from './base'

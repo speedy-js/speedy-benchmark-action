@@ -8,4 +8,4 @@ cd /usr/src/app/
 rm -rf benchmarks
 git clone https://github.com/speedy-js/examples.git benchmarks
 
-pnpm action-start
+pnpm action:start

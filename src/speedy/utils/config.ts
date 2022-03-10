@@ -45,6 +45,7 @@ class SpeedyConfig {
   public originalContent!: string
   public content!: string
 
+  private imports: Set<string> = new Set()
   private plugins: Set<string> = new Set()
   private profile: 'true' | 'false' | 'hooks' = 'false'
 
@@ -53,7 +54,7 @@ class SpeedyConfig {
     // eslint-disable-next-line no-cond-assign
     if ((instance = speedyConfigCache.get(configFile))) {
       // Reset content to original content to avoid `speedy.config.ts` from been modified
-      this.content = instance.originalContent
+      instance.content = instance.originalContent
       return instance
     }
 
@@ -63,7 +64,7 @@ class SpeedyConfig {
   }
 
   private addImport (importStr: string) {
-    this.content = importStr + ';\n' + this.content
+    this.imports.add(importStr)
   }
 
   public addPlugin (importStr: string, code: string) {
@@ -94,6 +95,8 @@ class SpeedyConfig {
     configCode = configCode.replace(CODE_MOD_COMMENT, `\n{ plugins: [${pluginCode}], profile: ${profile} }`)
 
     console.log(`Speedy profile generated for ${this.configFile}:`, configCode)
+
+    configCode = Array.from(this.imports).join(';\n') + ';\n' + configCode
 
     return configCode
   }

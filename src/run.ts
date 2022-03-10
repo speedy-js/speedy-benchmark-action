@@ -14,7 +14,8 @@ import { REPO_BRANCH, REPO_NAME, REPO_OWNER } from './constants'
 import { PullRequestFinalizer } from './finalizer/index'
 import { BenchmarkConfig, FixtureBenchmark, SpeedyBenchmark } from './types'
 
-export const tmpRoot = process.env.BENCHMARK_WORKING_DIR || os.tmpdir() + Date.now()
+export const tmpRoot = process.env.SPEEDY_BENCH_TMP || os.tmpdir() + Date.now()
+export const isDebug = process.env.NODE_ENV === 'debug'
 
 const setupSpeedy = async ({
   outputDir,
@@ -26,14 +27,19 @@ const setupSpeedy = async ({
   branch: string
 }) => {
   // Setup speedystack clone
-  // await cloneRepo(repoUrl, outputDir)
-  // await checkoutRef(branch, outputDir)
+  if (isDebug) {
+    console.log('Debug mode, skip speedystack cloning/bootstrap/build...')
+  } else {
+    console.log(`Cloning ${repoUrl}...`)
+    await cloneRepo(repoUrl, outputDir)
+    await checkoutRef(branch, outputDir)
 
-  console.log(`Bootstrapping ${repoUrl}`)
-  // await repoBootstrap(outputDir)
+    console.log(`Bootstrapping ${repoUrl}`)
+    await repoBootstrap(outputDir)
 
-  console.log(`Building ${repoUrl}`)
-  // await repoBuild(outputDir)
+    console.log(`Building ${repoUrl}`)
+    await repoBuild(outputDir)
+  }
 
   return RushKit.fromRushDir(outputDir)
 }
@@ -44,13 +50,17 @@ const setupFixtureBenchmarks = async (opts: {
 }) => {
   const { benchmarkDir, speedyPackages } = opts
   const sourceBenchmarkDir = path.join(__dirname, '../', 'benchmarks', benchmarkDir)
-  const tmpBenchmarkDir = '/var/folders/7k/vj8hldbj0vx_psy70ml9b4qm0000gn/T1646647198101/.tmp/apps-arco-pro-1646727859712' || path.join(tmpRoot, `.tmp/${benchmarkDir.split('/').join('-')}-${Date.now()}`)
+  const tmpBenchmarkDir = path.join(tmpRoot, `.tmp/${benchmarkDir.split('/').join('-')}`)
 
-  // Make a temporary benchmark copy
-  // await fs.copy(sourceBenchmarkDir, tmpBenchmarkDir, { recursive: true })
+  if (isDebug) {
+    console.log('Debug mode, skip copying benchmark fixtures...')
+  } else {
+    // Make a temporary benchmark copy
+    await fs.copy(sourceBenchmarkDir, tmpBenchmarkDir, { recursive: true })
 
-  // Use pnpm to install examples
-  // await pnpmInstall(tmpBenchmarkDir)
+    // Use pnpm to install examples
+    await pnpmInstall(tmpBenchmarkDir)
+  }
 
   const packageJSON = await import(path.join(tmpBenchmarkDir, 'package.json'))
   const deps = { ...packageJSON.dependencies, ...packageJSON.devDependencies }
@@ -187,9 +197,12 @@ const runSpeedyBenchmarks = async <T extends {
 const run = async () => {
   // Setup main copy of Speedy
   const mainDir = path.join(tmpRoot, '.tmp/main')
-  console.log(`Cleaning up ${mainDir}`)
-  // await fs.remove(mainDir)
-  console.log(`Cloning ${urlJoin(REPO_OWNER, REPO_NAME)}`)
+  if (isDebug) {
+    console.log('Debug mode, skip cleaning mainDir', mainDir)
+  } else {
+    console.log(`Cleaning up ${mainDir}`)
+    await fs.remove(mainDir)
+  }
   const mainSpeedyPackages = await setupSpeedy({
     outputDir: mainDir,
     repoUrl: urlJoin(REPO_OWNER, REPO_NAME),
@@ -198,9 +211,12 @@ const run = async () => {
 
   // Setup PR copy of Speedy
   const prDir = path.join(tmpRoot, '.tmp/pr')
-  console.log(`Cleaning up ${prDir}`)
-  // await fs.remove(prDir)
-  console.log(`Cloning ${actionInfo.prRepo}...`)
+  if (isDebug) {
+    console.log('Debug mode, skip cleaning prDir', prDir)
+  } else {
+    console.log(`Cleaning up ${prDir}`)
+    await fs.remove(prDir)
+  }
   const prSpeedyPackages = await setupSpeedy({
     outputDir: prDir,
     repoUrl: actionInfo.prRepo,
@@ -214,6 +230,7 @@ const run = async () => {
   console.log('Benchmark config', JSON.stringify(BENCHMARKS_CONFIG, null, 4))
 
   console.log('Running benchmarks for speedy packages on main branch...')
+
   const mainSpeedyBenchmarks = await runSpeedyBenchmarks({
     plugins: Object.values(performancePluginsSpeedy),
     speedyPackages: mainSpeedyPackages
