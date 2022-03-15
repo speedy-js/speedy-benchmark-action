@@ -49,19 +49,20 @@ const setupFixtureBenchmarks = async (opts: {
   speedyPackages: RushKit
 }) => {
   const { benchmarkDir, speedyPackages } = opts
-  const sourceBenchmarkDir = path.join(__dirname, '../', 'benchmarks', benchmarkDir)
-  const tmpBenchmarkDir = path.join(tmpRoot, `.tmp/${benchmarkDir.split('/').join('-')}`)
+  const sourceBenchmarkRootDir = path.join(__dirname, '../', 'benchmarks')
+  const tmpBenchmarkRootDir = path.join(tmpRoot, '.tmp/benchmarks')
 
   if (isDebug) {
     console.log('Debug mode, skip copying benchmark fixtures...')
   } else {
     // Make a temporary benchmark copy
-    await fs.copy(sourceBenchmarkDir, tmpBenchmarkDir, { recursive: true })
+    await fs.copy(sourceBenchmarkRootDir, tmpBenchmarkRootDir, { recursive: true })
 
     // Use pnpm to install examples
-    await pnpmInstall(tmpBenchmarkDir)
+    await pnpmInstall(tmpBenchmarkRootDir)
   }
 
+  const tmpBenchmarkDir = path.join(tmpBenchmarkRootDir, benchmarkDir)
   const packageJSON = await import(path.join(tmpBenchmarkDir, 'package.json'))
   const deps = { ...packageJSON.dependencies, ...packageJSON.devDependencies }
   const speedyDeps = [

@@ -27,7 +27,11 @@ class BuildProfile extends PerformancePluginFixture {
     console.log('generated speedy profiles', speedyProfiles)
 
     const generated = speedyProfiles[0]
-    const renamed = `speedy-profile-${await getLastCommitId()}-${benchmarkConfig.name.split(' ').join('-').toLowerCase()}.cpuprofile`
+
+    console.log('Running profile in', await fs.readdir(tmpBenchmarkDir))
+    console.log('tmpBenchmark dir is ', tmpBenchmarkDir)
+
+    const renamed = `speedy-profile-${await getLastCommitId(tmpBenchmarkDir)}-${benchmarkConfig.name.split(' ').join('-').toLowerCase()}-${Date.now()}.cpuprofile`
 
     await fs.rename(path.join(tmpBenchmarkDir, generated), path.join(tmpBenchmarkDir, renamed))
 
@@ -38,13 +42,15 @@ class BuildProfile extends PerformancePluginFixture {
       await fs.remove(profilePath)
     }
 
-    const profileUrl = `[Link to profile](https://cdn.jsdelivr.net/gh/speedy-js/speedy-profiles/${renamed})`
+    const profileUrl = `https://cdn.jsdelivr.net/gh/speedy-js/speedy-profiles/${renamed}`
+
+    const profileViewerUrl = `[Link to profile](https://www.speedscope.app/#profileURL=${encodeURIComponent(profileUrl)})`
 
     return {
       metrics: [{
         id: 'profile',
         title: 'Profile',
-        value: profileUrl
+        value: profileViewerUrl
       }]
     }
   }

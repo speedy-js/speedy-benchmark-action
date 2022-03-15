@@ -76,14 +76,10 @@ const prepareSpeedyCopies = async () => {
 const prepareFixtureCopies = async () => {
   await git.clone(FIXTURE_REPO, FIXTURE_DIR)
 
-  for (const benchmarkConfig of benchmarkConfigs) {
-    const { directory } = benchmarkConfig
-
-    const sourceBenchmarkDir = path.join(FIXTURE_DIR, directory)
-    const tmpBenchmarkDir = path.join(tmpRoot, `.tmp/${directory.split('/').join('-')}`)
-    await fs.copy(sourceBenchmarkDir, tmpBenchmarkDir, { recursive: true })
-    await pnpm.install(tmpBenchmarkDir)
-  }
+  const sourceBenchmarkDir = FIXTURE_DIR
+  const tmpBenchmarkDir = path.join(tmpRoot, '.tmp/benchmarks')
+  await fs.copy(sourceBenchmarkDir, tmpBenchmarkDir, { recursive: true })
+  await pnpm.install(tmpBenchmarkDir)
 }
 
 const run = async () => {

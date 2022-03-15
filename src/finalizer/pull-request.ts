@@ -147,7 +147,7 @@ ${markdownTable(columns)}
 `
     }, '')
 
-    return comment(`# Speedy Benchmark Result\n\n${speedyMarkdown}${fixtureMarkdown}`)
+    return comment(`# Speedy Benchmark Result\n\n${fixtureMarkdown}${speedyMarkdown}`)
   }
 }
 
