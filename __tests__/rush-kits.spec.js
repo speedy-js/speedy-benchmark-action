@@ -29,7 +29,7 @@ describe('rushKit', () => {
   });
 
   it('should filter correctly with category utilities', () => {
-    const cat = rushKit.CategorizedProjectsUtilities.create();
+    const cat = rushKit.RushKit.create();
 
     const result = cat.filterCategory(['packages']).end();
     expect(Object.keys(result)).to.be.lengthOf(1);

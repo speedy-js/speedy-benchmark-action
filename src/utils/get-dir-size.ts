@@ -2,7 +2,7 @@ import path from 'path'
 import fs from 'fs-extra'
 
 // getDirSize recursively gets size of all files in a directory
-async function getDirSize (dir, ctx = { size: 0 }) {
+async function getDirSize (dir: string, ctx = { size: 0 }) {
   let subDirs = await fs.readdir(dir)
   subDirs = subDirs.map((d) => path.join(dir, d))
 

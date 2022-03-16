@@ -1,7 +1,7 @@
 import path from 'path'
 import { execSync } from 'child_process'
 
-import { logger } from '../utils'
+import { logger, getLastCommitId } from '../utils'
 
 export default function getActionInfo () {
   let {
@@ -16,7 +16,7 @@ export default function getActionInfo () {
     GITHUB_REPOSITORY,
     GITHUB_EVENT_PATH,
     PR_STATS_COMMENT_TOKEN
-  } = process.env
+  } = process.env as { [key: string]: string }
 
   // only use custom endpoint if we don't have a token
   const commentEndpoint = !PR_STATS_COMMENT_TOKEN && COMMENT_ENDPOINT
@@ -88,3 +88,5 @@ export default function getActionInfo () {
 
   return info
 }
+
+export const actionInfo = getActionInfo()

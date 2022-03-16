@@ -1,6 +1,13 @@
 {
   "compilerOptions": {
+    "module": "ESNext",
+    "target": "ESNext",
     "moduleResolution": "node",
-    "esModuleInterop": true
-  }
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true
+  },
+  "exclude": ["benchmarks", "node_modules/**"]
 }

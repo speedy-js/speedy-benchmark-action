@@ -3,7 +3,7 @@ import fs from 'fs-extra'
 
 import { logger } from './logger'
 
-const getEntryPoint = async (dir) => {
+const getEntryPoint = async (dir: string) => {
   logger(`getting entry point for dir: ${dir}`)
 
   // eslint-disable-next-line @typescript-eslint/no-var-requires

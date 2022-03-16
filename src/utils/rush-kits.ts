@@ -1,8 +1,9 @@
-/* c8 ignore start */
 import path from 'path'
-import rushLib from '@microsoft/rush-lib'
+import * as rushLib from '@microsoft/rush-lib'
 
-const getProjects = (configFile) => {
+type ArrayType<T> = T extends (infer U)[] ? U : never
+
+const getProjects = (configFile?: string) => {
   const rushConfiguration = configFile
     ? rushLib.RushConfiguration.loadFromConfigurationFile(configFile)
     : rushLib.RushConfiguration.loadFromDefaultLocation()
@@ -18,7 +19,11 @@ const getProjects = (configFile) => {
   return normalized
 }
 
-const getCategorizedProjects = (configFile) => {
+export type CategorizedProjects = { [categoryName: string]: ReturnType<typeof getProjects>}
+
+export type Project = ReturnType<typeof getProjects>[number];
+
+const getCategorizedProjects = (configFile?: string) => {
   return getProjects(configFile).reduce((categories, project) => {
     const category = path.basename(project.absoluteFolder.replace(`/${project.shortFolder}`, ''))
 
@@ -29,35 +34,29 @@ const getCategorizedProjects = (configFile) => {
     categories[category].push(project)
 
     return categories
-  }, {})
+  }, {} as CategorizedProjects)
 }
 
-class CategorizedProjectsUtilities {
-  constructor (categorized) {
+class RushKit {
+  private pending: CategorizedProjects | null = null;
+  public projects: CategorizedProjects;
+  constructor (categorized?: CategorizedProjects) {
     this.projects = categorized || {}
-    this.pending = null
   }
 
-  /**
-   * @private
-   */
-  get toFilter () {
+  private get toFilter (): CategorizedProjects {
     return this.pending || this.projects
   }
 
-  /**
-   * filter category
-   * @param {string[] | string} categoryName
-   */
-  filterCategory (categoryName) {
-    categoryName = Array.isArray(categoryName) ? categoryName : [categoryName]
+  filterCategory (categoryName: string | string[]) {
+    const categoryNameList = (Array.isArray(categoryName) ? categoryName : [categoryName])
 
     this.pending = Object.keys(this.toFilter).reduce((acc, name) => {
-      if (categoryName.includes(name)) {
+      if (categoryNameList.includes(name)) {
         acc[name] = this.toFilter[name]
       }
       return acc
-    }, {})
+    }, {} as CategorizedProjects)
 
     return this
   }
@@ -66,19 +65,19 @@ class CategorizedProjectsUtilities {
    * filterShortDirName
    * @param {string[] | string} shortDirName
    */
-  filterShortDir (shortDirName) {
-    shortDirName = Array.isArray(shortDirName) ? shortDirName : [shortDirName]
+  filterShortDir (shortDir: string | string[]) {
+    const shortDirList = Array.isArray(shortDir) ? shortDir : [shortDir]
 
     this.pending = Object.keys(this.toFilter).reduce((acc, categoryName) => {
-      const filtered = this.toFilter[categoryName].filter((project) => {
-        return shortDirName.includes(project.shortFolder)
+      const filtered = this.toFilter[categoryName].filter((project: ArrayType<ReturnType<typeof getProjects>>) => {
+        return shortDirList.includes(project.shortFolder)
       })
 
       return {
         ...acc,
         [categoryName]: filtered
       }
-    })
+    }, {} as CategorizedProjects)
 
     return this
   }
@@ -89,15 +88,22 @@ class CategorizedProjectsUtilities {
     return filtered
   }
 
-  static create (rushDirName) {
-    return new this(getCategorizedProjects(rushDirName ? path.join(rushDirName, 'rush.json') : undefined))
+  clone () {
+    const instance = new RushKit()
+    instance.pending = null
+    instance.projects = {
+      ...this.projects
+    }
+    return instance
+  }
+
+  static fromRushDir (rushDir?: string) {
+    return new this(getCategorizedProjects(rushDir ? path.join(rushDir, 'rush.json') : undefined))
   }
 }
 
 export {
   getCategorizedProjects,
   getProjects,
-  CategorizedProjectsUtilities
+  RushKit
 }
-
-/* c8 ignore stop */
