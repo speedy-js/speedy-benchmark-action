@@ -58,9 +58,55 @@ const comment = async (summary: string) => {
 class PullRequestFinalizer {
   constructor (public speedyComparison: SpeedyBenchmarkCompared, public fixtureComparison: FixtureBenchmarkCompared) {}
 
-  async finalize () {
-    const speedyComparison = this.speedyComparison
+  async finalizeFixture () {
     const fixtureComparison = this.fixtureComparison
+    const fixture = Object.entries(fixtureComparison).map(([pluginId, cmped]) => {
+      const plugin = Object.values(fixturePlugins).find((plugin) => pluginId === plugin.id)
+
+      if (!plugin) {
+        console.warn(`Unable to find plugin with id: ${pluginId}`)
+        return null
+      }
+
+      const data = cmped.reduce<[packageName: string, mainValue: string, prValue: string, diff: string][]>((data, { metricsCmped, raw, fixture }) => {
+        const mainMetric = raw[0]?.metrics[0]
+        const prMetric = raw[1]?.metrics[0]
+
+        const mainValue = mainMetric?.value
+        const mainFormat = mainMetric ? 'format' in mainMetric ? mainMetric.format : undefined : undefined
+        const prValue = prMetric?.value
+        const prFormat = prMetric ? 'format' in prMetric ? prMetric.format : undefined : undefined
+
+        return [...data, [
+          fixture.name,
+          mainMetric ? formatMetric(mainValue, mainFormat) : '-',
+          prMetric ? formatMetric(prValue, prFormat) : '-',
+          metricsCmped?.[0] ? formatMetric(metricsCmped[0].diff, metricsCmped[0].format) : '-'
+        ]]
+      }, [])
+
+      return {
+        title: plugin.title,
+        columns: ['Fixture Name', 'Main', `Pull Request(${actionInfo.prRef})`, 'Diff'],
+        data
+      }
+    }).filter((item): item is Exclude<typeof item, null> => Boolean(item))
+
+    let fixtureMarkdown = '## Fixture\n\n'
+    fixtureMarkdown += fixture.reduce((str, curr) => {
+      const columns = [curr.columns, ...curr.data]
+      return `${str}
+### ${curr.title}
+      
+${markdownTable(columns)}
+`
+    }, '')
+
+    return fixtureMarkdown
+  }
+
+  async finalizeSpeedy () {
+    const speedyComparison = this.speedyComparison
 
     const speedy = Object.entries(speedyComparison).map(([pluginId, cmped]) => {
       const plugin = Object.values(speedyPlugins).find((plugin) => pluginId === plugin.id)
@@ -94,40 +140,7 @@ class PullRequestFinalizer {
       }
     }).filter((item): item is Exclude<typeof item, null> => Boolean(item))
 
-    const fixture = Object.entries(fixtureComparison).map(([pluginId, cmped]) => {
-      const plugin = Object.values(fixturePlugins).find((plugin) => pluginId === plugin.id)
-
-      if (!plugin) {
-        console.warn(`Unable to find plugin with id: ${pluginId}`)
-        return null
-      }
-
-      const data = cmped.reduce<[packageName: string, mainValue: string, prValue: string, diff: string][]>((data, { metricsCmped, raw, fixture }) => {
-        const mainMetric = raw[0]?.metrics[0]
-        const prMetric = raw[1]?.metrics[0]
-
-        const mainValue = mainMetric?.value
-        const mainFormat = mainMetric ? 'format' in mainMetric ? mainMetric.format : undefined : undefined
-        const prValue = prMetric?.value
-        const prFormat = prMetric ? 'format' in prMetric ? prMetric.format : undefined : undefined
-
-        return [...data, [
-          fixture.name,
-          mainMetric ? formatMetric(mainValue, mainFormat) : '-',
-          prMetric ? formatMetric(prValue, prFormat) : '-',
-          metricsCmped?.[0] ? formatMetric(metricsCmped[0].diff, metricsCmped[0].format) : '-'
-        ]]
-      }, [])
-
-      return {
-        title: plugin.title,
-        columns: ['Fixture Name', 'Main', `Pull Request(${actionInfo.prRef})`, 'Diff'],
-        data
-      }
-    }).filter((item): item is Exclude<typeof item, null> => Boolean(item))
-
     let speedyMarkdown = '## Speedy\n\n'
-    let fixtureMarkdown = '## Fixture\n\n'
 
     speedyMarkdown += speedy.reduce((str, curr) => {
       const columns = [curr.columns, ...curr.data]
@@ -138,16 +151,11 @@ ${markdownTable(columns)}
 `
     }, '')
 
-    fixtureMarkdown += fixture.reduce((str, curr) => {
-      const columns = [curr.columns, ...curr.data]
-      return `${str}
-### ${curr.title}
-      
-${markdownTable(columns)}
-`
-    }, '')
+    return speedyMarkdown
+  }
 
-    return comment(`# Speedy Benchmark Result\n\n${fixtureMarkdown}${speedyMarkdown}`)
+  async finalize () {
+    return comment(`# Speedy Benchmark Result\n\n${this.finalizeFixture()}${this.finalizeSpeedy()}`)
   }
 }
 

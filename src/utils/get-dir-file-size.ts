@@ -3,7 +3,7 @@ import path from 'path'
 
 interface FileSize {
   path: string
-  size: string
+  size: number
 }
 
 const helper = async (fullDir: string, baseDir = ''): Promise<FileSize[]> => {
@@ -15,7 +15,7 @@ const helper = async (fullDir: string, baseDir = ''): Promise<FileSize[]> => {
         ...await result,
         {
           path: path.join(baseDir, curr.name),
-          size: (await fs.stat(path.join(fullDir, curr.name))).size.toString()
+          size: (await fs.stat(path.join(fullDir, curr.name))).size
         }
       ]
     }

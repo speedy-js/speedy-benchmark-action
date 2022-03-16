@@ -1,28 +1,29 @@
 import fs from 'fs-extra'
 
-import { getEntryPoint } from '../../utils'
+import { getEntryPoint, getDirFileSize } from '../../utils'
 import { PerformancePluginFixture, RunFixtureCtxt, PluginBenchmark } from '../base'
 
 class DistSizePlugin extends PerformancePluginFixture {
   static id = 'dist-size-plugin'
   static title = 'Dist size'
 
-  async runEach ({ benchmarkConfig, tmpBenchmarkDir }: RunFixtureCtxt): Promise<PluginBenchmark | void> {
+  async runEach ({ tmpBenchmarkDir }: RunFixtureCtxt): Promise<PluginBenchmark | void> {
     const dirPath = await getEntryPoint(tmpBenchmarkDir)
 
     if (!dirPath || !await fs.pathExists(dirPath)) {
       return
     }
 
-    const dirent = await fs.readdir(dirPath, { withFileTypes: true })
+    const distFileSize = await getDirFileSize(tmpBenchmarkDir)
+
+    const metrics = distFileSize.map((file) => {
+      return { id: file.path, title: file.path, value: file.size, format: 'bytes' } as const
+    }).sort((a, b) => {
+      return a.title.length - b.title.length
+    })
 
     return {
-      metrics: [{
-        id: 'dist-size',
-        title: 'Dist Size',
-        value: 123,
-        format: 'bytes'
-      }]
+      metrics
     }
   }
 }

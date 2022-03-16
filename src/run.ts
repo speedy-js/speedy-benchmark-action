@@ -106,8 +106,6 @@ const cleanupBenchmarks = async (tmpDir: string, linkedDeps: {
     console.log(`Unlinking ${pkgName} for ${directory}`)
     await yarnUnlink(directory, pkgName)
   }
-
-  await fs.remove(tmpDir)
 }
 
 const runFixtureBenchmarks = async <T extends {
