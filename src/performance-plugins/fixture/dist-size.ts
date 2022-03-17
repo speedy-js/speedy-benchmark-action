@@ -1,6 +1,7 @@
+import path from 'path'
 import fs from 'fs-extra'
 
-import { getEntryPoint, getDirFileSize } from '../../utils'
+import { getDirFileSize } from '../../utils'
 import { PerformancePluginFixture, RunFixtureCtxt, PluginBenchmark } from '../base'
 
 class DistSizePlugin extends PerformancePluginFixture {
@@ -8,13 +9,14 @@ class DistSizePlugin extends PerformancePluginFixture {
   static title = 'Dist size'
 
   async runEach ({ tmpBenchmarkDir }: RunFixtureCtxt): Promise<PluginBenchmark | void> {
-    const dirPath = await getEntryPoint(tmpBenchmarkDir)
+    // TODO: configurable dist dir
+    const dirPath = path.join(tmpBenchmarkDir, 'dist')
 
     if (!dirPath || !await fs.pathExists(dirPath)) {
       return
     }
 
-    const distFileSize = await getDirFileSize(tmpBenchmarkDir)
+    const distFileSize = await getDirFileSize(dirPath)
 
     const metrics = distFileSize.map((file) => {
       return { id: file.path, title: file.path, value: file.size, format: 'bytes' } as const

@@ -62,8 +62,7 @@ class PullRequestFinalizer {
   async finalizeFixture () {
     const fixtureComparison = this.fixtureComparison
     const fixture = Object.entries(fixtureComparison).map(([pluginId, cmped]) => {
-      const plugin = Object.values(fixturePlugins).find((plugin) => pluginId === plugin.id)
-
+      const plugin = fixturePlugins.find((plugin) => pluginId === plugin.id)
       if (!plugin) {
         console.warn(`Unable to find plugin with id: ${pluginId}`)
         return null
@@ -91,7 +90,7 @@ class PullRequestFinalizer {
           ]
         }
 
-        const columns = ['Metric', 'Main', `Pull Request(${actionInfo.prRef})`, 'Diff']
+        const columns = ['Metric', 'Main', 'Pull Request', 'Diff']
         const data = zip(mainMetrics, prMetrics, metricsCmped).map(([mainMetric, prMetric, metricCmped]) => {
           return [
             mainMetric.title || prMetric.title || 'untitled',
@@ -124,7 +123,7 @@ class PullRequestFinalizer {
     const speedyComparison = this.speedyComparison
 
     const speedy = Object.entries(speedyComparison).map(([pluginId, cmped]) => {
-      const plugin = Object.values(speedyPlugins).find((plugin) => pluginId === plugin.id)
+      const plugin = speedyPlugins.find((plugin) => pluginId === plugin.id)
 
       if (!plugin) {
         console.warn(`Unable to find plugin with id: ${pluginId}`)
@@ -150,7 +149,7 @@ class PullRequestFinalizer {
 
       return {
         title: plugin.title,
-        columns: ['Package Name', 'Main', `Pull Request(${actionInfo.prRef})`, 'Diff'],
+        columns: ['Package Name', 'Main', 'Pull Request', 'Diff'],
         data
       }
     }).filter((item): item is Exclude<typeof item, null> => Boolean(item))
@@ -170,7 +169,11 @@ ${markdownTable(columns)}
   }
 
   async finalize () {
-    return comment(`# Speedy Benchmark Result\n\n${this.finalizeFixture()}${this.finalizeSpeedy()}`)
+    const markdown = `# Speedy Benchmark Result\n\n${await this.finalizeFixture()}${await this.finalizeSpeedy()}`
+    console.log('PR Finalized Result')
+    console.log(markdown)
+
+    return comment(markdown)
   }
 }
 
