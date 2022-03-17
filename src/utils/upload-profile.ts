@@ -19,6 +19,8 @@ export const writeProfileToGitHubWithRetry = async (profilePath: string) => {
     await git.cloneRepo('speedy-js/speedy-profiles', profileRepoDir)
   } else {
     console.log('Profile repo dir exists, skipping clone', profileRepoDir)
+    console.log('Pulling latest commits in profile repo...')
+    await git.pull('main', profileRepoDir)
   }
 
   const profile = path.join(profileRepoDir, name)

@@ -95,7 +95,7 @@ const setupFixtureBenchmarks = async (opts: {
       }, Promise.resolve())
   }
 
-  return { linkedDeps, tmpBenchmarkDir }
+  return { linkedDeps, tmpBenchmarkDir, tmpBenchmarkRootDir }
 }
 
 const cleanupBenchmarks = async (tmpDir: string, linkedDeps: {
@@ -107,7 +107,11 @@ const cleanupBenchmarks = async (tmpDir: string, linkedDeps: {
     await yarnUnlink(directory, pkgName)
   }
 
-  await fs.remove(tmpDir)
+  if (isDebug) {
+    console.log('Debug mode, skip cleaning up benchmark root dir...', tmpDir)
+  } else {
+    await fs.remove(tmpDir)
+  }
 }
 
 const runFixtureBenchmarks = async <T extends {
@@ -119,7 +123,7 @@ const runFixtureBenchmarks = async <T extends {
 }): Promise<FixtureBenchmark[]> => {
   const { plugins, speedyPackages, benchmarkConfig } = opts
 
-  const { linkedDeps, tmpBenchmarkDir } = await setupFixtureBenchmarks({
+  const { linkedDeps, tmpBenchmarkDir, tmpBenchmarkRootDir } = await setupFixtureBenchmarks({
     benchmarkDir: benchmarkConfig.directory,
     speedyPackages
   })
@@ -151,7 +155,7 @@ const runFixtureBenchmarks = async <T extends {
   }
 
   // Do some cleanups
-  await cleanupBenchmarks(tmpBenchmarkDir, linkedDeps)
+  await cleanupBenchmarks(tmpBenchmarkRootDir, linkedDeps)
 
   return fixtureBenchmarks
 }

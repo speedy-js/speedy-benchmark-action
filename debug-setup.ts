@@ -4,8 +4,6 @@ import fs from 'fs-extra'
 
 import { runCommand } from './src/utils/exec'
 
-import benchmarkConfigs from './benchmarks.json'
-
 export const tmpRoot = path.join(os.homedir(), '.tmp/speedy-benchmark-action')
 
 const SPEEDY_REPO = 'https://github.com/hardfist/speedystack.git'
