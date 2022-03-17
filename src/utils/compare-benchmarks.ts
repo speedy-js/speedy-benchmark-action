@@ -2,7 +2,7 @@ import { Metric, MetricNumber, Project } from '../performance-plugins/base'
 
 import { BenchmarkConfig, FixtureBenchmark, SpeedyBenchmark } from '../types'
 
-type MetricComparison = {
+export type MetricComparison = {
   id: string
   title?: string
   diff: number
@@ -25,7 +25,7 @@ const compareMetrics = (mainMetrics: Metric[], prMetrics: Metric[]) => {
       })
     }
 
-    // we dont support string results right now
+    // String metrics are not comparable
   }
 
   return results
