@@ -4,7 +4,7 @@ import urlJoin from 'url-join'
 import os from 'os'
 
 import { actionInfo } from './prepare/action-info'
-import { repoBootstrap, repoBuild, cloneRepo, checkoutRef } from './prepare/repo-setup'
+import { repoBootstrap, repoBuild, cloneRepo, checkoutRef, pull } from './prepare/repo-setup'
 
 import { RushKit, pnpmInstall, yarnLink, yarnUnlink, compareFixtureBenchmarks, compareSpeedyBenchmarks } from './utils'
 import { speedyPlugins as performancePluginsSpeedy, fixturePlugins as performancePluginsFixture, PerformancePluginFixture, PerformancePluginSpeedy } from './performance-plugins'
@@ -15,6 +15,7 @@ import { PullRequestFinalizer } from './finalizer/index'
 import { BenchmarkConfig, FixtureBenchmark, SpeedyBenchmark } from './types'
 
 export const tmpRoot = process.env.SPEEDY_BENCH_TMP || os.tmpdir() + Date.now()
+export const profileRepoDir = path.join(tmpRoot, 'speedy-profile')
 export const isDebug = process.env.NODE_ENV === 'debug'
 
 const setupSpeedy = async ({
@@ -42,6 +43,22 @@ const setupSpeedy = async ({
   }
 
   return RushKit.fromRushDir(outputDir)
+}
+
+const setupProfileRepo = async () => {
+  if (!fs.existsSync(profileRepoDir)) {
+    await cloneRepo('speedy-js/speedy-profiles', profileRepoDir)
+  } else {
+    console.log('Profile repo dir exists, skipping clone', profileRepoDir)
+    console.log('Pulling latest commits in profile repo...')
+    await pull('main', profileRepoDir)
+  }
+
+  return {
+    cleanupProfileRepo: async () => {
+      await fs.remove(profileRepoDir)
+    }
+  }
 }
 
 const setupFixtureBenchmarks = async (opts: {
@@ -200,6 +217,9 @@ const runSpeedyBenchmarks = async <T extends {
 }
 
 const run = async () => {
+  // Setup speedy profile copy
+  const { cleanupProfileRepo } = await setupProfileRepo()
+
   // Setup main copy of Speedy
   const mainDir = path.join(tmpRoot, '.tmp/main')
   if (isDebug) {
@@ -247,7 +267,7 @@ const run = async () => {
   for (const benchmarkConfig of BENCHMARKS_CONFIG) {
     console.log(`Running ${benchmarkConfig.name} on main branch...`)
     mainFixtureBenchmarks.push(await runFixtureBenchmarks({
-      plugins: Object.values(performancePluginsFixture) as [],
+      plugins: performancePluginsFixture,
       speedyPackages: mainSpeedyPackages,
       benchmarkConfig
     }))
@@ -263,11 +283,13 @@ const run = async () => {
   for (const benchmarkConfig of BENCHMARKS_CONFIG) {
     console.log(`Running ${benchmarkConfig.name} on pull request branch...`)
     prFixtureBenchmarks.push(await runFixtureBenchmarks({
-      plugins: Object.values(performancePluginsFixture) as [],
+      plugins: performancePluginsFixture,
       speedyPackages: prSpeedyPackages,
       benchmarkConfig
     }))
   }
+
+  await cleanupProfileRepo()
 
   const speedyBenchmarksCompared = compareSpeedyBenchmarks(mainSpeedyBenchmarks, prSpeedyBenchmarks)
   const fixtureBenchmarksCompared = compareFixtureBenchmarks(mainFixtureBenchmarks.flat(), prFixtureBenchmarks.flat())

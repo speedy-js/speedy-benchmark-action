@@ -1,6 +1,7 @@
-import fs from 'fs-extra'
 import path from 'path'
+import fs from 'fs-extra'
 
+import { SpeedyConfig } from '../speedy/utils'
 import { BenchmarkConfig, MergeIntersection } from '../types'
 import { CategorizedProjects, RushKit, Project, runCommand } from '../utils'
 
@@ -63,7 +64,7 @@ abstract class PerformancePluginFixture {
     const configPath = path.join(tmpBenchmarkDir, 'speedy.config.ts')
 
     if (!fs.existsSync(configPath)) {
-      console.warn('Unable to find speedy config file for package: %s, at %s', name, configPath)
+      throw new Error(`Unable to find speedy config file for package: ${tmpBenchmarkDir}, at ${configPath}`)
     }
 
     return {
@@ -71,8 +72,18 @@ abstract class PerformancePluginFixture {
     }
   }
 
+  getSpeedyConfig (tmpBenchmarkDir: string, configRelPath?: string) {
+    const configPath = path.join(tmpBenchmarkDir, configRelPath || 'speedy.config.ts')
+
+    if (!fs.existsSync(configPath)) {
+      throw new Error(`Unable to find speedy config file for package: ${tmpBenchmarkDir}, at ${configPath}`)
+    }
+
+    return new SpeedyConfig(configPath)
+  }
+
   runSpeedy (cwd: string, command: 'dev' | 'build', args: string[] = []) {
-    return runCommand(`${cwd}/node_modules/.bin/speedy`, [command, ...args], {
+    return runCommand(`${cwd}/node_modules/@speedy-js/speedy-core/cli.js`, [command, ...args], {
       cwd: cwd
     })
   }
