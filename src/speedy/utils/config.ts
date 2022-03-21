@@ -54,7 +54,10 @@ class SpeedyConfig {
 
   private imports: Set<string> = new Set()
   private plugins: Set<string> = new Set()
-  private cache = true
+  private cache: UserConfig['cache'] = {
+    transform: true
+  }
+
   private profile: 'true' | 'false' | 'hooks' = 'false'
 
   constructor (public configFile: string) {
@@ -95,7 +98,7 @@ class SpeedyConfig {
     return this
   }
 
-  public setCache (cache: boolean) {
+  public setCache (cache: UserConfig['cache']) {
     this.cache = cache
     return this
   }
@@ -115,7 +118,7 @@ class SpeedyConfig {
     configCode = configCode.replace(/(export\s*=|export\s*default)/, 'export = __deepMerge(')
     configCode += ',' + CODE_MOD_COMMENT + ');\n\n' + HELPER_FUNCTIONS
 
-    configCode = configCode.replace(CODE_MOD_COMMENT, `\n{ plugins: [${pluginCode}], profile: ${profile}, cache: ${cache} }`)
+    configCode = configCode.replace(CODE_MOD_COMMENT, `\n{ plugins: [${pluginCode}], profile: ${profile}, cache: ${JSON.stringify(cache, null, 2)} }`)
 
     console.log(`Speedy profile generated for ${this.configFile}:`, configCode)
 
