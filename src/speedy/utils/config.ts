@@ -44,10 +44,6 @@ function __deepMerge(target, ...sources) {
 };\n\n
 `
 
-type ConfigPath = string
-// eslint-disable-next-line no-use-before-define
-const speedyConfigCache = new Map<ConfigPath, SpeedyConfig>()
-
 class SpeedyConfig {
   public originalContent!: string
   public content!: string
@@ -61,17 +57,8 @@ class SpeedyConfig {
   private profile: 'true' | 'false' | 'hooks' = 'false'
 
   constructor (public configFile: string) {
-    let instance: SpeedyConfig | undefined
-    // eslint-disable-next-line no-cond-assign
-    if ((instance = speedyConfigCache.get(configFile))) {
-      // Reset content to original content to avoid `speedy.config.ts` from been modified
-      instance.content = instance.originalContent
-      return instance
-    }
-
     this.originalContent = fs.existsSync(configFile) ? fs.readFileSync(configFile, 'utf-8').trim() : DEFAULT_SPEEDY_CONFIG
     this.content = this.originalContent
-    speedyConfigCache.set(configFile, this)
   }
 
   public async getConfig () {

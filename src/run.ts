@@ -46,7 +46,8 @@ const setupSpeedy = async ({
 }
 
 const setupProfileRepo = async () => {
-  if (!fs.existsSync(profileRepoDir)) {
+  if (!await fs.pathExists(profileRepoDir)) {
+    console.log(`Cloning speedy-js/speedy-profiles into ${profileRepoDir}...`)
     await cloneRepo('speedy-js/speedy-profiles', profileRepoDir)
   } else {
     console.log('Profile repo dir exists, skipping clone', profileRepoDir)

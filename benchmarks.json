@@ -1,7 +1,6 @@
 [
   {
     "name": "Arco Design",
-    "directory": "apps/arco-pro",
-    "entryPoint": "src/index.tsx"
+    "directory": "apps/arco-pro"
   }
 ]
