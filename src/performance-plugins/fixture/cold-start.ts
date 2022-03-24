@@ -17,7 +17,7 @@ class ColdStartPlugin extends PerformancePluginFixture {
     await this.runSpeedy(tmpBenchmarkDir, 'dev')
     const endTime = Date.now()
 
-    speedyConfig.restore()
+    await speedyConfig.restore()
 
     return {
       metrics: [{

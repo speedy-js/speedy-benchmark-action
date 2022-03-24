@@ -45,8 +45,8 @@ function __deepMerge(target, ...sources) {
 `
 
 class SpeedyConfig {
-  public originalContent!: string
-  public content!: string
+  public originalContent: string
+  public content: string
 
   private imports: Set<string> = new Set()
   private plugins: Set<string> = new Set()
