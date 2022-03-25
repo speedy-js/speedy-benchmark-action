@@ -10,7 +10,7 @@ on:
 
 jobs:
   lint:
-    name: Lint
+    name: CI
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -26,5 +26,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --registry https://registry.npmjs.org
 
-      - name: Type Check
+      - name: Run ESLint
+        run: pnpm lint
+
+      - name: Run type check
         run: pnpm build

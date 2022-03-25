@@ -1,4 +1,5 @@
 import path from 'path'
+import fs from 'fs-extra'
 
 import { getDirSize, RushKit } from '../../utils'
 import { PerformancePluginSpeedy, PluginBenchmark, Project } from '../base'
@@ -12,7 +13,13 @@ class NodeModulesPlugin extends PerformancePluginSpeedy {
   }
 
   async runEach (project: Project): Promise<PluginBenchmark> {
-    const size = await getDirSize(path.join(project.absoluteFolder, 'node_modules'))
+    const devDependencyPaths = project.packageJsonEditor.devDependencyList.map(dep =>
+      path.join(path.join(project.absoluteFolder, 'node_modules', dep.name))
+    )
+    const size = await getDirSize(path.join(project.absoluteFolder, 'node_modules'), {
+      // omit dev dependencies
+      filter: (filePath) => !devDependencyPaths.includes(filePath)
+    })
     return {
       metrics: [{
         id: 'node-modules-size',

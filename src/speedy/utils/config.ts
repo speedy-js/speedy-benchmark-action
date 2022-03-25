@@ -1,4 +1,11 @@
+import path from 'path'
 import fs from 'fs-extra'
+import { defineConfig } from '@speedy-js/speedy-core'
+import { loadConfig } from '@speedy-js/speedy-config-loader'
+
+import { ArrayType } from '../../types'
+
+type UserConfig = ArrayType<Extract<Parameters<typeof defineConfig>[0], any[]>>
 
 const DEFAULT_SPEEDY_CONFIG = `
 export = {
@@ -37,30 +44,30 @@ function __deepMerge(target, ...sources) {
 };\n\n
 `
 
-type ConfigPath = string
-// eslint-disable-next-line no-use-before-define
-const speedyConfigCache = new Map<ConfigPath, SpeedyConfig>()
-
 class SpeedyConfig {
-  public originalContent!: string
-  public content!: string
+  public originalContent: string
+  public content: string
 
   private imports: Set<string> = new Set()
   private plugins: Set<string> = new Set()
+  private cache: UserConfig['cache'] = {
+    transform: true
+  }
+
   private profile: 'true' | 'false' | 'hooks' = 'false'
 
   constructor (public configFile: string) {
-    let instance: SpeedyConfig | undefined
-    // eslint-disable-next-line no-cond-assign
-    if ((instance = speedyConfigCache.get(configFile))) {
-      // Reset content to original content to avoid `speedy.config.ts` from been modified
-      instance.content = instance.originalContent
-      return instance
-    }
-
     this.originalContent = fs.existsSync(configFile) ? fs.readFileSync(configFile, 'utf-8').trim() : DEFAULT_SPEEDY_CONFIG
     this.content = this.originalContent
-    speedyConfigCache.set(configFile, this)
+  }
+
+  public async getConfig () {
+    const { data } = await loadConfig<UserConfig>({
+      cwd: path.dirname(this.configFile),
+      configKey: path.basename(this.configFile).split('.')[0],
+      configFile: this.configFile
+    })
+    return data
   }
 
   private addImport (importStr: string) {
@@ -78,9 +85,15 @@ class SpeedyConfig {
     return this
   }
 
+  public setCache (cache: UserConfig['cache']) {
+    this.cache = cache
+    return this
+  }
+
   public generate () {
     const pluginCode = Array.from(this.plugins).join(',')
     const profile = this.profile
+    const cache = this.cache
 
     let configCode = this.content
     const len = configCode.length
@@ -92,7 +105,7 @@ class SpeedyConfig {
     configCode = configCode.replace(/(export\s*=|export\s*default)/, 'export = __deepMerge(')
     configCode += ',' + CODE_MOD_COMMENT + ');\n\n' + HELPER_FUNCTIONS
 
-    configCode = configCode.replace(CODE_MOD_COMMENT, `\n{ plugins: [${pluginCode}], profile: ${profile} }`)
+    configCode = configCode.replace(CODE_MOD_COMMENT, `\n{ plugins: [${pluginCode}], profile: ${profile}, cache: ${JSON.stringify(cache, null, 2)} }`)
 
     console.log(`Speedy profile generated for ${this.configFile}:`, configCode)
 

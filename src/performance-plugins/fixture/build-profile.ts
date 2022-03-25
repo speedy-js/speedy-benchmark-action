@@ -35,7 +35,12 @@ class BuildProfile extends PerformancePluginFixture {
 
     await fs.rename(path.join(tmpBenchmarkDir, generated), path.join(tmpBenchmarkDir, renamed))
 
-    await writeProfileToGitHubWithRetry(path.join(tmpBenchmarkDir, renamed))
+    let uploadWithError = false
+    try {
+      await writeProfileToGitHubWithRetry(path.join(tmpBenchmarkDir, renamed))
+    } catch (e) {
+      uploadWithError = true
+    }
 
     for (const file of speedyProfiles) {
       const profilePath = path.join(tmpBenchmarkDir, file)
@@ -43,14 +48,13 @@ class BuildProfile extends PerformancePluginFixture {
     }
 
     const profileUrl = `https://cdn.jsdelivr.net/gh/speedy-js/speedy-profiles/${renamed}`
-
     const profileViewerUrl = `[Link to profile](https://www.speedscope.app/#profileURL=${encodeURIComponent(profileUrl)})`
 
     return {
       metrics: [{
         id: 'profile',
         title: 'Profile',
-        value: profileViewerUrl
+        value: uploadWithError ? 'failed' : profileViewerUrl
       }]
     }
   }

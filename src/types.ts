@@ -23,3 +23,5 @@ export type FixtureBenchmark = {
 export type MergeIntersection<T> = T extends object ? {
   [K in keyof T]: T[K] extends object ? MergeIntersection<T[K]> : T[K]
 } : T
+
+export type ArrayType<T extends any[]> = T extends (infer U)[] ? U : never
