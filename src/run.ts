@@ -132,7 +132,7 @@ const setupFixtureBenchmarks = async (opts: {
             directory: path.join(tmpBenchmarkDir)
           })
           try {
-            await yarnUnlink(curr.packageName)
+            await yarnUnlink(curr.absoluteFolder)
           } catch (err) {}
           // Link it to global
           await yarnLink(curr.absoluteFolder)
