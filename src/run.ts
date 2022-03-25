@@ -3,6 +3,8 @@ import fs from 'fs-extra'
 import urlJoin from 'url-join'
 import os from 'os'
 
+import { Repository } from '@napi-rs/simple-git'
+
 import { actionInfo } from './prepare/action-info'
 import { repoBootstrap, repoBuild, cloneRepo, checkoutRef, pull } from './prepare/repo-setup'
 
@@ -53,6 +55,28 @@ const setupProfileRepo = async () => {
     console.log('Profile repo dir exists, skipping clone', profileRepoDir)
     console.log('Pulling latest commits in profile repo...')
     await pull('main', profileRepoDir)
+  }
+
+  const repo = new Repository(profileRepoDir)
+
+  const profiles = (await fs.readdir(profileRepoDir)).filter(p => p.endsWith('.cpuprofile'))
+
+  const toBeRemoved = await profiles.reduce<Promise<string[]>>(async (toBeRemoved, profile) => {
+    const relPaths: string[] = await toBeRemoved
+    // Remove profiles that haven't been modified for 3 days
+    if ((Date.now() - (await repo.getFileLatestModifiedDateAsync(profile))) > 24 * 60 * 60 * 1000 * 3) {
+      return [
+        ...relPaths,
+        profile
+      ]
+    }
+
+    return relPaths
+  }, Promise.resolve([]))
+
+  for (const profileToRemove in toBeRemoved) {
+    console.log(`Removing outdated profile ${profileToRemove}...`)
+    await fs.remove(path.resolve(profileRepoDir, profileToRemove))
   }
 
   return {
