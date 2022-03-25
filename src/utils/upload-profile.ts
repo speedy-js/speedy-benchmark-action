@@ -38,7 +38,7 @@ export const writeProfileToGitHubWithRetry = async (profilePath: string) => {
       ], {
         cwd: profileRepoDir
       })
-      await require('../prepare/repo-setup').pull('main', 'speedy-js/speedy-profiles', profileRepoDir)
+      await require('../prepare/repo-setup').push('main', 'speedy-js/speedy-profiles', profileRepoDir)
 
       return
     } catch (e) {

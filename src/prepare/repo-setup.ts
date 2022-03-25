@@ -88,6 +88,6 @@ export const repoSetup = (info: {
   }
 }
 
-const { repoBootstrap, repoBuild, repoInstallDep, cloneRepo, checkoutRef, pull } = repoSetup(actionInfo)
+const { repoBootstrap, repoBuild, repoInstallDep, cloneRepo, checkoutRef, pull, push } = repoSetup(actionInfo)
 
-export { repoBootstrap, repoBuild, repoInstallDep, cloneRepo, checkoutRef, pull }
+export { repoBootstrap, repoBuild, repoInstallDep, cloneRepo, checkoutRef, pull, push }

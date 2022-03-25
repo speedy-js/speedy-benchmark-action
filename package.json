@@ -19,6 +19,7 @@
     "@actions/exec": "^1.1.0",
     "@actions/github": "^5.0.0",
     "@microsoft/rush-lib": "5.58.0",
+    "@napi-rs/simple-git": "^0.1.5",
     "@speedy-js/speedy-config-loader": "^0.10.1",
     "esbuild": "^0.14.27",
     "esbuild-register": "^3.3.2",
