@@ -187,6 +187,7 @@ const runFixtureBenchmarks = async <T extends {
   const fixtureBenchmarks = []
 
   for (const plugin of pluginInst) {
+    global.gc?.()
     const res = await plugin.runEach({
       benchmarkConfig,
       tmpBenchmarkDir
@@ -230,6 +231,7 @@ const runSpeedyBenchmarks = async <T extends {
       const pkgs = (await plugin.getPackages?.(speedyPackages.clone())) || speedyPackages.clone().projects
 
     for (const pkg of Object.values(pkgs).flat()) {
+      global.gc?.()
       const res = await plugin.runEach(pkg)
       const pluginId = (plugin.constructor as typeof PerformancePluginSpeedy).id
 
@@ -285,6 +287,7 @@ const run = async () => {
 
   console.log('Running benchmarks for speedy packages on main branch...')
 
+  global.gc?.()
   const mainSpeedyBenchmarks = await runSpeedyBenchmarks({
     plugins: Object.values(performancePluginsSpeedy),
     speedyPackages: mainSpeedyPackages
@@ -303,6 +306,7 @@ const run = async () => {
   }
 
   console.log('Running benchmarks for speedy packages on pull request branch...')
+  global.gc?.()
   const prSpeedyBenchmarks = await runSpeedyBenchmarks({
     plugins: Object.values(performancePluginsSpeedy),
     speedyPackages: prSpeedyPackages
