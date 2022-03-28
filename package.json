@@ -9,8 +9,8 @@
     "test": "mocha __tests__/*.spec.js",
     "setup:debug": "esno debug-setup.ts",
     "clean:debug": "esno debug-cleanup.ts",
-    "action:debug": "NODE_ENV=debug node -r ./register.js index.ts",
-    "action:start": "node -r ./register.js index.ts",
+    "action:debug": "NODE_ENV=debug node -r ./register.js --expose-gc index.ts",
+    "action:start": "node -r ./register.js --expose-gc index.ts",
     "build": "tsc --noEmit",
     "lint": "eslint src/**/*.ts"
   },
