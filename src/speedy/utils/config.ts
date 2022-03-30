@@ -75,7 +75,9 @@ class SpeedyConfig {
   }
 
   public addPlugin (importStr: string, code: string) {
-    this.addImport(importStr)
+    if (importStr?.length > 0) {
+      this.addImport(importStr)
+    }
     this.plugins.add(code)
     return this
   }
