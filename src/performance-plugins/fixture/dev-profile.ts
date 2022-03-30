@@ -3,6 +3,17 @@ import fs from 'fs-extra'
 
 import { PerformancePluginFixture, PluginBenchmark, RunFixtureCtxt } from '../base'
 
+const speedyCIPluginDev: [importStr: string, plugin: string] = [`import { SpeedyCIPluginDev } from "${path.resolve(__dirname, '../../speedy/plugins/SpeedyCIPluginDev')}"`, 'SpeedyCIPluginDev()']
+const speedyESBuild: [importStr: string, plugin: string] = ['', `{
+  name: 'local-esbuild',
+  apply(compiler) {
+    compiler.hooks.esbuild.tap('esbuild', () => {
+      const speedyEsbuild = require('@speedy-js/esbuild')
+      return  speedyEsbuild;
+    });
+  },
+}`]
+
 class DevProfile extends PerformancePluginFixture {
   static id = 'dev-profile'
   static title = 'Dev profile'
@@ -12,7 +23,7 @@ class DevProfile extends PerformancePluginFixture {
     const speedyConfig = await this.getSpeedyConfig(tmpBenchmarkDir)
 
     await speedyConfig
-      .addPlugin(`import { SpeedyCIPluginDev } from "${path.resolve(__dirname, '../../speedy/plugins/SpeedyCIPluginDev')}"`, 'SpeedyCIPluginDev()')
+      .addPlugin(...speedyCIPluginDev)
       .setCache({
         transform: false
       })
@@ -25,7 +36,7 @@ class DevProfile extends PerformancePluginFixture {
     const hotReloadWithoutCache = await fs.readJSON(devProfile)
 
     await speedyConfig
-      .addPlugin(`import { SpeedyCIPluginDev } from "${path.resolve(__dirname, '../../speedy/plugins/SpeedyCIPluginDev')}"`, 'SpeedyCIPluginDev()')
+      .addPlugin(...speedyCIPluginDev)
       .setCache({
         transform: true
       })
@@ -38,22 +49,11 @@ class DevProfile extends PerformancePluginFixture {
     const hotReloadWithCache = await fs.readJSON(devProfile)
 
     await speedyConfig
-      .addPlugin('', `{
-        name: 'local-esbuild',
-        apply(compiler) {
-          compiler.hooks.esbuild.tap('esbuild', () => {
-            const speedyEsbuild = require('@speedy-js/esbuild')
-            return  speedyEsbuild;
-          });
-        },
-      }`)
+      .addPlugin(...speedyESBuild)
+      .addPlugin(...speedyCIPluginDev)
       .setCache({
         transform: false
       })
-      .addPlugin(
-        `import { SpeedyCIPluginDev } from "${path.resolve(__dirname, '../../speedy/plugins/SpeedyCIPluginDev')}"`,
-        'SpeedyCIPluginDev()'
-      )
       .write()
 
     await this.runSpeedy(tmpBenchmarkDir, 'dev')
@@ -63,19 +63,11 @@ class DevProfile extends PerformancePluginFixture {
     const hotReloadWithCustomizedESBuildNoCache = await fs.readJSON(devProfile)
 
     await speedyConfig
-      .addPlugin('', `{
-        name: 'local-esbuild',
-        apply(compiler) {
-          compiler.hooks.esbuild.tap('esbuild', () => {
-            const speedyEsbuild = require('@speedy-js/esbuild')
-            return  speedyEsbuild;
-          });
-        },
-      }`)
-      .addPlugin(
-        `import { SpeedyCIPluginDev } from "${path.resolve(__dirname, '../../speedy/plugins/SpeedyCIPluginDev')}"`,
-        'SpeedyCIPluginDev()'
-      )
+      .addPlugin(...speedyESBuild)
+      .addPlugin(...speedyCIPluginDev)
+      .setCache({
+        transform: true
+      })
       .write()
 
     await this.runSpeedy(tmpBenchmarkDir, 'dev')
