@@ -82,7 +82,7 @@ abstract class PerformancePluginFixture {
     return new SpeedyConfig(configPath)
   }
 
-  runSpeedy (cwd: string, command: 'dev' | 'build', args: string[] = []) {
+  runSpeedy (cwd: string, command: 'dev' | 'build' | (string & {}), args: string[] = []) {
     return runCommand(`${cwd}/node_modules/@speedy-js/speedy-core/cli.js`, [command, ...args], {
       cwd: cwd
     })
