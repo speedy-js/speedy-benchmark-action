@@ -40,46 +40,28 @@ class DevProfile extends PerformancePluginFixture {
     const nocache1 = hotReloadWithoutCache[0][1] - hotReloadWithoutCache[0][0]
     const nocache2 = hotReloadWithoutCache[1][1] - hotReloadWithoutCache[1][0]
     const nocache3 = hotReloadWithoutCache[2][1] - hotReloadWithoutCache[2][0]
+    const nocacheAvg = (nocache1 + nocache2 + nocache3) / 3
 
     const cache1 = hotReloadWithCache[0][1] - hotReloadWithCache[0][0]
     const cache2 = hotReloadWithCache[1][1] - hotReloadWithCache[1][0]
     const cache3 = hotReloadWithCache[2][1] - hotReloadWithCache[2][0]
+    const cacheAvg = (cache1 + cache2 + cache3) / 3
 
     return {
       metrics: [{
-        id: 'hot-reload-nocache-1',
-        title: 'Reload 1',
-        value: nocache1,
+        id: 'hot-reload-nocache-avg',
+        title: 'Reload(avg.)',
+        value: nocacheAvg,
         format: 'ms'
       }, {
-        id: 'hot-reload-nocache-2',
-        title: 'Reload 2',
-        value: nocache2,
-        format: 'ms'
-      }, {
-        id: 'hot-reload-nocache-3',
-        title: 'Reload 3',
-        value: nocache3,
-        format: 'ms'
-      }, {
-        id: 'hot-reload-cache-1',
-        title: 'Reload 1(cached)',
-        value: cache1,
-        format: 'ms'
-      }, {
-        id: 'hot-reload-cache-2',
-        title: 'Reload 2(cached)',
-        value: cache2,
-        format: 'ms'
-      }, {
-        id: 'hot-reload-cache-3',
-        title: 'Reload 3(cached)',
-        value: cache3,
+        id: 'hot-reload-cache-avg',
+        title: 'Reload(cached avg.)',
+        value: cacheAvg,
         format: 'ms'
       }, {
         id: 'diff',
         title: 'Diff(cached - nocache)',
-        value: ((cache1 + cache2 + cache3) / 3) - ((nocache1 + nocache2 + nocache3) / 3),
+        value: cacheAvg - nocacheAvg,
         format: 'ms'
       }]
     }
