@@ -48,7 +48,6 @@ export type PluginSpeedyFinalize = () => {
 abstract class PerformancePluginSpeedy {
   static id: string
   static title: string
-  static finalize: PluginSpeedyFinalize
   abstract getPackages(speedyPackages: RushKit): CategorizedProjects
   abstract runEach(project: Project): Promise<PluginBenchmark | void>
 }
@@ -58,7 +57,6 @@ export type PluginFixtureFinalize = () => void
 abstract class PerformancePluginFixture {
   static id: string
   static title: string
-  static finalize: PluginFixtureFinalize
   abstract runEach(ctxt: RunFixtureCtxt): Promise<PluginBenchmark | void>
   checkFixtureStatus ({ tmpBenchmarkDir }: RunFixtureCtxt) {
     const configPath = path.join(tmpBenchmarkDir, 'speedy.config.ts')
