@@ -1,6 +1,6 @@
 import { ColdStartPlugin } from './cold-start'
 import { BuildProfile } from './build-profile'
 import { DistSizePlugin } from './dist-size'
-import { DevProfile } from './dev-profile'
+import { HotReload } from './hot-reload'
 
-export const fixturePlugins = [DevProfile, ColdStartPlugin, BuildProfile, DistSizePlugin]
+export const fixturePlugins = [HotReload, ColdStartPlugin, BuildProfile, DistSizePlugin]

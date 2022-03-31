@@ -14,9 +14,9 @@ const speedyESBuild: [importStr: string, plugin: string] = ['', `{
   },
 }`]
 
-class DevProfile extends PerformancePluginFixture {
-  static id = 'dev-profile'
-  static title = 'Dev profile'
+class HotReload extends PerformancePluginFixture {
+  static id = 'hot-reload'
+  static title = 'Hot reload'
 
   async runEach ({ tmpBenchmarkDir }: RunFixtureCtxt): Promise<PluginBenchmark | void> {
     const devProfile = path.join(tmpBenchmarkDir, 'speedy-benchmark-dev-profile.json')
@@ -137,4 +137,4 @@ class DevProfile extends PerformancePluginFixture {
   }
 }
 
-export { DevProfile }
+export { HotReload }
