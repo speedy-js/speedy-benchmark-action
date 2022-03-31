@@ -6,8 +6,9 @@ import { runCommand } from './src/utils/exec'
 
 export const tmpRoot = path.join(os.homedir(), '.tmp/speedy-benchmark-action')
 
-const SPEEDY_REPO = 'https://github.com/hardfist/speedystack.git'
-const FIXTURE_REPO = 'https://github.com/speedy-js/examples.git'
+const USE_SSH = typeof process.env.SPEEDY_USE_SSH !== 'undefined' ? process.env.SPEEDY_USE_SSH === 'true' : true
+const SPEEDY_REPO = USE_SSH ? 'git@github.com:hardfist/speedystack.git' : 'https://github.com/hardfist/speedystack.git'
+const FIXTURE_REPO = USE_SSH ? 'git@github.com:speedy-js/examples.git' : 'https://github.com/speedy-js/examples.git'
 const PR_DIR = path.join(tmpRoot, '.tmp/pr')
 const MAIN_DIR = path.join(tmpRoot, '.tmp/main')
 const FIXTURE_DIR = path.join(tmpRoot, '.tmp/__speedy_fixtures__')
