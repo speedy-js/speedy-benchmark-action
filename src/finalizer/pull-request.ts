@@ -68,6 +68,9 @@ class PullRequestFinalizer {
         return null
       }
 
+      let resultHasIncrease = false
+      let resultHasDecrease = false
+
       const markdown = cmped.reduce<string>((markdown, { metricsCmped, raw, fixture }) => {
         metricsCmped = metricsCmped || []
         const mainMetrics = raw[0]?.metrics || []
@@ -82,6 +85,14 @@ class PullRequestFinalizer {
           const mainFormat = mainMetric ? 'format' in mainMetric ? mainMetric.format : undefined : undefined
           const prValue = prMetric?.value
           const prFormat = prMetric ? 'format' in prMetric ? prMetric.format : undefined : undefined
+
+          if (metricCmped?.diff) {
+            if (metricCmped.diff > 0) {
+              resultHasIncrease = true
+            } else {
+              resultHasDecrease = true
+            }
+          }
 
           return [
             mainMetric ? formatMetric(mainValue, mainFormat) : '-',
@@ -110,10 +121,17 @@ class PullRequestFinalizer {
         return markdown + '\n\n'
       }, '')
 
+      let resultNote = ''
+      if (resultHasIncrease) {
+        resultNote = '(Increase Detected ⚠)'
+      } else if (resultHasDecrease) {
+        resultNote = '(Decrease detected ✓)'
+      }
+
       let resultContent = ''
 
       resultContent += '<details>\n'
-      resultContent += `<summary><strong>${plugin.title}</strong></summary>\n\n`
+      resultContent += `<summary><strong>${plugin.title}</strong>${resultNote}</summary>\n\n`
       resultContent += markdown
       resultContent += '\n</details>\n\n'
 
@@ -132,6 +150,9 @@ class PullRequestFinalizer {
     const speedy = Object.entries(speedyComparison).map(([pluginId, cmped]) => {
       const plugin = speedyPlugins.find((plugin) => pluginId === plugin.id)
 
+      let resultHasIncrease = false
+      let resultHasDecrease = false
+
       if (!plugin) {
         console.warn(`Unable to find plugin with id: ${pluginId}`)
         return null
@@ -146,6 +167,14 @@ class PullRequestFinalizer {
         const prValue = prMetric?.value
         const prFormat = prMetric ? 'format' in prMetric ? prMetric.format : undefined : undefined
 
+        if (metricsCmped?.[0]) {
+          if (metricsCmped[0].diff > 0) {
+            resultHasIncrease = true
+          } else if (metricsCmped[0].diff < 0) {
+            resultHasDecrease = true
+          }
+        }
+
         return [...data, [
           pkg.packageName,
           mainMetric ? formatMetric(mainValue, mainFormat) : '-',
@@ -157,7 +186,9 @@ class PullRequestFinalizer {
       return {
         title: plugin.title,
         columns: ['Package Name', 'Main', 'Pull Request', 'Diff'],
-        data
+        data,
+        resultHasIncrease,
+        resultHasDecrease
       }
     }).filter((item): item is Exclude<typeof item, null> => Boolean(item))
 
@@ -165,8 +196,17 @@ class PullRequestFinalizer {
 
     speedyMarkdown += speedy.reduce((str, curr) => {
       const columns = [curr.columns, ...curr.data]
+      const { resultHasIncrease, resultHasDecrease } = curr
+
+      let resultNote = ''
+      if (resultHasIncrease) {
+        resultNote = '(Increase Detected ⚠)'
+      } else if (resultHasDecrease) {
+        resultNote = '(Decrease detected ✓)'
+      }
+
       str += '<details>\n'
-      str += `<summary><strong>${curr.title}</strong></summary>\n\n`
+      str += `<summary><strong>${curr.title}</strong>${resultNote}</summary>\n\n`
       str += markdownTable(columns)
       str += '\n</details>\n\n'
       return str
