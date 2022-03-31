@@ -13,7 +13,7 @@ class DistSizePlugin extends PerformancePluginFixture {
     const dirPath = path.join(tmpBenchmarkDir, 'dist')
 
     if (!dirPath || !await fs.pathExists(dirPath)) {
-      return
+      await this.runSpeedy(tmpBenchmarkDir, 'build')
     }
 
     const distFileSize = await getDirFileSize(dirPath)

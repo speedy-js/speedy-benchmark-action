@@ -110,7 +110,14 @@ class PullRequestFinalizer {
         return markdown + '\n\n'
       }, '')
 
-      return `### ${plugin.title}\n\n${markdown}`
+      let resultContent = ''
+
+      resultContent += '<details>\n'
+      resultContent += `<summary><strong>${plugin.title}</strong></summary>\n\n`
+      resultContent += markdown
+      resultContent += '\n</details>\n\n'
+
+      return resultContent
     }).join('\n')
 
     let fixtureMarkdown = '## Fixture\n\n'
@@ -158,11 +165,11 @@ class PullRequestFinalizer {
 
     speedyMarkdown += speedy.reduce((str, curr) => {
       const columns = [curr.columns, ...curr.data]
-      return `${str}
-### ${curr.title}
-      
-${markdownTable(columns)}
-`
+      str += '<details>\n'
+      str += `<summary><strong>${curr.title}</strong></summary>\n\n`
+      str += markdownTable(columns)
+      str += '\n</details>\n\n'
+      return str
     }, '')
 
     return speedyMarkdown
