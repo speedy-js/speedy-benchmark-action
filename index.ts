@@ -25,5 +25,5 @@ run().then(() => {
     fs.removeSync(tmpRoot)
   }
 
-  process.exit(1)
+  process.nextTick(() => process.exit(1))
 })

@@ -56,6 +56,9 @@ const comment = async (summary: string) => {
   }
 }
 
+const MS_THRESHOLD = 300 // 300ms
+const BYTES_THRESHOLD = 2048 // 2kb
+
 class PullRequestFinalizer {
   constructor (public speedyComparison: SpeedyBenchmarkCompared, public fixtureComparison: FixtureBenchmarkCompared) {}
 
@@ -87,10 +90,18 @@ class PullRequestFinalizer {
           const prFormat = prMetric ? 'format' in prMetric ? prMetric.format : undefined : undefined
 
           if (metricCmped?.diff) {
-            if (metricCmped.diff > 0) {
-              resultHasIncrease = true
-            } else {
-              resultHasDecrease = true
+            if (prFormat === 'ms') {
+              if (metricCmped.diff > MS_THRESHOLD) {
+                resultHasIncrease = true
+              } else {
+                resultHasDecrease = true
+              }
+            } else if (prFormat === 'bytes') {
+              if (metricCmped.diff > BYTES_THRESHOLD) {
+                resultHasIncrease = true
+              } else {
+                resultHasDecrease = true
+              }
             }
           }
 
@@ -135,13 +146,13 @@ class PullRequestFinalizer {
       resultContent += markdown
       resultContent += '\n</details>\n\n'
 
-      return resultContent
-    }).join('\n')
+      return { markdown: resultContent, hasIncrease: resultHasIncrease }
+    })
 
     let fixtureMarkdown = '## Fixture\n\n'
-    fixtureMarkdown += fixture
+    fixtureMarkdown += fixture.map(item => item?.markdown).join('\n')
 
-    return fixtureMarkdown
+    return { markdown: fixtureMarkdown, hasIncrease: fixture.some(item => item?.hasIncrease) }
   }
 
   async finalizeSpeedy () {
@@ -168,10 +179,18 @@ class PullRequestFinalizer {
         const prFormat = prMetric ? 'format' in prMetric ? prMetric.format : undefined : undefined
 
         if (metricsCmped?.[0]) {
-          if (metricsCmped[0].diff > 0) {
-            resultHasIncrease = true
-          } else if (metricsCmped[0].diff < 0) {
-            resultHasDecrease = true
+          if (prFormat === 'ms') {
+            if (metricsCmped[0].diff > MS_THRESHOLD) {
+              resultHasIncrease = true
+            } else if (metricsCmped[0].diff < 0) {
+              resultHasDecrease = true
+            }
+          } else if (prFormat === 'bytes') {
+            if (metricsCmped[0].diff > BYTES_THRESHOLD) {
+              resultHasIncrease = true
+            } else if (metricsCmped[0].diff < 0) {
+              resultHasDecrease = true
+            }
           }
         }
 
@@ -212,181 +231,22 @@ class PullRequestFinalizer {
       return str
     }, '')
 
-    return speedyMarkdown
+    return { markdown: speedyMarkdown, hasIncrease: speedy.some((item) => item.resultHasIncrease) }
   }
 
   async finalize () {
-    const markdown = `# Speedy Benchmark Result\n\n${await this.finalizeFixture()}${await this.finalizeSpeedy()}`
+    const fixture = await this.finalizeFixture()
+    const speedy = await this.finalizeSpeedy()
+    const markdown = `# Speedy Benchmark Result\n\n${fixture.markdown}${speedy.markdown}`
     console.log('PR Finalized Result')
     console.log(markdown)
 
-    return comment(markdown)
+    await comment(markdown)
+
+    if (speedy.hasIncrease || fixture.hasIncrease) {
+      throw new Error(`PR has increase, threshold: ${MS_THRESHOLD}ms, ${BYTES_THRESHOLD}bytes`)
+    }
   }
 }
-
-const fixture = {
-  'cold-start-plugin': [
-    {
-        metricsCmped: [
-            {
-                id: 'a.js',
-                title: 'a.js',
-                diff: 304,
-                format: 'bytes'
-            },
-            {
-              id: 'b.js',
-              title: 'b.js',
-              diff: 600,
-              format: 'bytes'
-          }
-        ],
-        raw: [
-            {
-                metrics: [
-                    {
-                        id: 'a.js',
-                        title: 'a.js',
-                        value: 12378,
-                        format: 'bytes'
-                    },
-                    {
-                      id: 'b.js',
-                      title: 'b.js',
-                      value: 12378,
-                      format: 'bytes'
-                  }
-                ],
-                pluginId: 'cold-start-plugin',
-                fixture: {
-                    name: 'Arco Design',
-                    directory: 'apps/arco-pro'
-                }
-            },
-            {
-                metrics: [
-                    {
-                        id: 'a.js',
-                        title: 'a.js',
-                        value: 12682,
-                        format: 'bytes'
-                    },
-                    {
-                      id: 'b.js',
-                      title: 'b.js',
-                      value: 12978,
-                      format: 'bytes'
-                  }
-                ],
-                pluginId: 'cold-start-plugin',
-                fixture: {
-                    name: 'Arco Design',
-                    directory: 'apps/arco-pro'
-                }
-            }
-        ],
-        fixture: {
-            name: 'Arco Design',
-            directory: 'apps/arco-pro'
-        },
-        pluginId: 'cold-start-plugin'
-    }
-]
-  // 'cold-start-plugin': [
-  //     {
-  //         metricsCmped: [
-  //             {
-  //                 id: 'cold-start-diff',
-  //                 title: 'Cold Start Diff',
-  //                 diff: 304,
-  //                 format: 'ms'
-  //             }
-  //         ],
-  //         raw: [
-  //             {
-  //                 metrics: [
-  //                     {
-  //                         id: 'cold-start-diff',
-  //                         title: 'Cold Start Diff',
-  //                         value: 12378,
-  //                         format: 'ms'
-  //                     }
-  //                 ],
-  //                 pluginId: 'cold-start-plugin',
-  //                 fixture: {
-  //                     name: 'Arco Design',
-  //                     directory: 'apps/arco-pro'
-  //                 }
-  //             },
-  //             {
-  //                 metrics: [
-  //                     {
-  //                         id: 'cold-start-diff',
-  //                         title: 'Cold Start Diff',
-  //                         value: 12682,
-  //                         format: 'ms'
-  //                     }
-  //                 ],
-  //                 pluginId: 'cold-start-plugin',
-  //                 fixture: {
-  //                     name: 'Arco Design',
-  //                     directory: 'apps/arco-pro'
-  //                 }
-  //             }
-  //         ],
-  //         fixture: {
-  //             name: 'Arco Design',
-  //             directory: 'apps/arco-pro'
-  //         },
-  //         pluginId: 'cold-start-plugin'
-  //     }
-  // ]
-  // 'build-profile-plugin': [
-  //     {
-  //         metricsCmped: [
-
-  //         ],
-  //         raw: [
-  //             {
-  //                 metrics: [
-  //                     {
-  //                         id: 'profile',
-  //                         title: 'Profile',
-  //                         value: '[Link to profile](https://www.speedscope.app/#profileURL=https%3A%2F%2Fcdn.jsdelivr.net%2Fgh%2Fspeedy-js%2Fspeedy-profiles%2Fspeedy-profile-5091cab0b1adff0496df7e0803e923c76c2337e4-arco-design-1647505246457.cpuprofile)'
-  //                     }
-  //                 ],
-  //                 pluginId: 'build-profile-plugin',
-  //                 fixture: {
-  //                     name: 'Arco Design',
-  //                     directory: 'apps/arco-pro'
-  //                 }
-  //             },
-  //             {
-  //                 metrics: [
-  //                     {
-  //                         id: 'profile',
-  //                         title: 'Profile',
-  //                         value: '[Link to profile](https://www.speedscope.app/#profileURL=https%3A%2F%2Fcdn.jsdelivr.net%2Fgh%2Fspeedy-js%2Fspeedy-profiles%2Fspeedy-profile-5091cab0b1adff0496df7e0803e923c76c2337e4-arco-design-1647505372932.cpuprofile)'
-  //                     }
-  //                 ],
-  //                 pluginId: 'build-profile-plugin',
-  //                 fixture: {
-  //                     name: 'Arco Design',
-  //                     directory: 'apps/arco-pro'
-  //                 }
-  //             }
-  //         ],
-  //         fixture: {
-  //             name: 'Arco Design',
-  //             directory: 'apps/arco-pro'
-  //         },
-  //         pluginId: 'build-profile-plugin'
-  //     }
-  // ]
-}
-
-// const finalizer = new PullRequestFinalizer(null, fixture)
-
-// console.log(finalizer.finalizeFixture())
 
 export { PullRequestFinalizer }

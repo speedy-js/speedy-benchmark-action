@@ -117,21 +117,6 @@ class HotReload extends PerformancePluginFixture {
         title: 'Reload(cached-custom-esbuild, avg of 3)',
         value: esbuildCacheAvg,
         format: 'ms'
-      }, {
-        id: 'diff',
-        title: 'Diff(cached - nocache)',
-        value: cacheAvg - nocacheAvg,
-        format: 'ms'
-      }, {
-        id: 'diff-esbuild',
-        title: 'Diff(cached-custom-esbuild - nocache-custom-esbuild)',
-        value: esbuildCacheAvg - esbuildNoCacheAvg,
-        format: 'ms'
-      }, {
-        id: 'diff-esbuild-and-original',
-        title: 'Diff(cached-custom-esbuild - cached)',
-        value: esbuildCacheAvg - cacheAvg,
-        format: 'ms'
       }]
     }
   }
