@@ -37,7 +37,7 @@ WORKDIR /usr/src/app
 COPY ./ ./
 
 RUN npm install -g @microsoft/rush
-RUN npm install -g pnpm
+RUN npm install -g pnpm@6.32.11
 RUN pnpm install
 RUN pnpm build
 
