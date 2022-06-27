@@ -6,6 +6,7 @@ async function runCommand (
   options?: SpawnOptionsWithoutStdio,
   returnOutput?: boolean
 ) {
+  console.log(`[runCommand] running command ${cmd} ${args && args.join(' ')}, cwd: ${options?.cwd || process.cwd()}`)
   const command = spawn(cmd, args, options)
 
   let output = ''
@@ -23,7 +24,7 @@ async function runCommand (
   await new Promise((resolve, reject) => {
     command.once('close', (code) => {
       if (code !== 0) {
-        const errorText = `command ${cmd} ${args && args.join(' ')} failed with status code ${code}.`
+        const errorText = `[runCommand] command ${cmd} ${args && args.join(' ')} failed with status code ${code}.`
         console.error(errorText)
         return reject(errorText)
       }

@@ -19,6 +19,8 @@ import { BenchmarkConfig, FixtureBenchmark, SpeedyBenchmark } from './types'
 export const tmpRoot = process.env.SPEEDY_BENCH_TMP || os.tmpdir() + Date.now()
 export const profileRepoDir = path.join(tmpRoot, 'speedy-profile')
 export const isDebug = process.env.NODE_ENV === 'debug'
+export const CLEANUP_SPEEDY_DIR = process.env.SPEEDY_BENCH_CLEANUP_SPEEDY_DIR === 'true'
+export const CLEANUP_BENCH_TMP = process.env.SPEEDY_BENCH_CLEANUP_BENCH_TMP === 'true'
 
 const setupSpeedy = async ({
   outputDir,
@@ -247,7 +249,17 @@ const runSpeedyBenchmarks = async <T extends {
   return speedyBenchmarks
 }
 
+const setupFixtureRepo = async () => {
+  const sourceFixtureRepo = path.join(__dirname, '../', 'benchmarks')
+  if (await fs.pathExists(sourceFixtureRepo)) {
+    await fs.remove(sourceFixtureRepo)
+  }
+  console.log("Cloning 'benchmarks' repo to 'benchmarks' directory")
+  await cloneRepo('speedy-js/examples', sourceFixtureRepo)
+}
+
 const run = async () => {
+  await setupFixtureRepo()
   // Setup speedy profile copy
   const { cleanupProfileRepo } = await setupProfileRepo()
 
@@ -255,6 +267,8 @@ const run = async () => {
   const mainDir = path.join(tmpRoot, '.tmp/main')
   if (isDebug) {
     console.log('Debug mode, skip cleaning mainDir', mainDir)
+  } else if (!CLEANUP_SPEEDY_DIR) {
+    console.log('CLEANUP_SPEEDY_DIR is set to `false`, skip cleaning mainDir', mainDir)
   } else {
     console.log(`Cleaning up ${mainDir}`)
     await fs.remove(mainDir)
@@ -269,6 +283,8 @@ const run = async () => {
   const prDir = path.join(tmpRoot, '.tmp/pr')
   if (isDebug) {
     console.log('Debug mode, skip cleaning prDir', prDir)
+  } else if (!CLEANUP_SPEEDY_DIR) {
+    console.log('CLEANUP_SPEEDY_DIR is set to `false`, skip cleaning prDir', prDir)
   } else {
     console.log(`Cleaning up ${prDir}`)
     await fs.remove(prDir)
@@ -289,7 +305,7 @@ const run = async () => {
 
   global.gc?.()
   const mainSpeedyBenchmarks = await runSpeedyBenchmarks({
-    plugins: Object.values(performancePluginsSpeedy),
+    plugins: performancePluginsSpeedy,
     speedyPackages: mainSpeedyPackages
   })
 
@@ -308,7 +324,7 @@ const run = async () => {
   console.log('Running benchmarks for speedy packages on pull request branch...')
   global.gc?.()
   const prSpeedyBenchmarks = await runSpeedyBenchmarks({
-    plugins: Object.values(performancePluginsSpeedy),
+    plugins: performancePluginsSpeedy,
     speedyPackages: prSpeedyPackages
   })
 

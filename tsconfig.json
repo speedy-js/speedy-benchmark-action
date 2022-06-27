@@ -1,13 +1,15 @@
 {
   "compilerOptions": {
-    "module": "ESNext",
-    "target": "ESNext",
+    "module": "commonjs",
+    "target": "es2015",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "strict": true,
     "resolveJsonModule": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "outDir": "dist"
   },
-  "exclude": ["benchmarks", "node_modules/**"]
+  "exclude": ["benchmarks", "node_modules/**"],
+  "include": ["src"]
 }
