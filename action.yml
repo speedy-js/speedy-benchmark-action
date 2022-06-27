@@ -1,0 +1,13 @@
+name: 'speedy-benchmark-action'
+description: 'Measures performance impact of a PR'
+runs:
+  using: 'composite'
+  steps:
+    - name: setup
+      run: |
+        npm install -g @microsoft/rush esno
+        cd $GITHUB_ACTION_PATH && pnpm install
+      shell: bash
+    - name: action
+      run: cd $GITHUB_ACTION_PATH && pnpm run action:start
+      shell: bash
