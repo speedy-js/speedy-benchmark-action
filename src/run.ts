@@ -6,7 +6,7 @@ import os from 'os'
 import { Repository } from '@napi-rs/simple-git'
 
 import { actionInfo } from './prepare/action-info'
-import { repoBootstrap, repoBuild, cloneRepo, checkoutRef, pull } from './prepare/repo-setup'
+import { repoBootstrap, repoBuild, cloneRepo, checkoutRef, pull, resetToRef } from './prepare/repo-setup'
 
 import { RushKit, pnpmInstall, yarnLink, yarnUnlink, compareFixtureBenchmarks, compareSpeedyBenchmarks, runCommand } from './utils'
 import { speedyPlugins as performancePluginsSpeedy, fixturePlugins as performancePluginsFixture, PerformancePluginFixture, PerformancePluginSpeedy } from './performance-plugins'
@@ -37,7 +37,10 @@ const setupSpeedy = async ({
   } else {
     console.log(`Cloning ${repoUrl}...`)
     await cloneRepo(repoUrl, outputDir)
-    await checkoutRef(branch, outputDir)
+    await checkoutRef(branch, outputDir, {
+      force: true
+    })
+    await resetToRef(`origin/${branch}`, repoUrl, outputDir)
 
     console.log(`Bootstrapping ${repoUrl}`)
     await repoBootstrap(outputDir)

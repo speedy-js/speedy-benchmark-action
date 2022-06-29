@@ -5,7 +5,7 @@ runs:
   steps:
     - name: setup
       run: |
-        npm install -g @microsoft/rush esno
+        npm install -g @microsoft/rush
         cd $GITHUB_ACTION_PATH && pnpm install
       shell: bash
     - name: action

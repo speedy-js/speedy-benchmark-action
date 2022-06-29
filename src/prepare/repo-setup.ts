@@ -23,7 +23,11 @@ export const repoSetup = (info: {
       await fs.mkdirp(dest)
       await runCommand('git', ['clone', repoUrl, dest])
     },
-    async checkoutRef (ref = '', repoDir = '') {
+    async checkoutRef (ref = '', repoDir = '', options: {
+      force: boolean
+    } = {
+      force: false
+    }) {
       const exists = await fs.pathExists(repoDir)
       if (!exists) {
         return console.warn('Repo dir does not exist: ', repoDir)
@@ -31,7 +35,7 @@ export const repoSetup = (info: {
       await runCommand('git', ['fetch'], {
         cwd: repoDir
       })
-      await runCommand('git', ['checkout', `${ref}`], {
+      await runCommand('git', ['checkout', `${ref}`, options.force ? '-f' : ''], {
         cwd: repoDir
       })
     },
@@ -59,8 +63,7 @@ export const repoSetup = (info: {
       if (!exists) {
         return console.warn('Repo dir does not exist: ', repoDir)
       }
-      const repoUrl = `${gitRoot}${repoPath}.git`
-      await runCommand('git', ['reset', repoUrl, '--hard', ref], {
+      await runCommand('git', ['reset', '--hard', ref], {
         cwd: repoDir
       })
     },
@@ -88,6 +91,6 @@ export const repoSetup = (info: {
   }
 }
 
-const { repoBootstrap, repoBuild, repoInstallDep, cloneRepo, checkoutRef, pull, push } = repoSetup(actionInfo)
+const { repoBootstrap, repoBuild, repoInstallDep, cloneRepo, checkoutRef, pull, push, resetToRef } = repoSetup(actionInfo)
 
-export { repoBootstrap, repoBuild, repoInstallDep, cloneRepo, checkoutRef, pull, push }
+export { repoBootstrap, repoBuild, repoInstallDep, cloneRepo, checkoutRef, pull, push, resetToRef }
