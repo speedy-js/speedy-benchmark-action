@@ -93,13 +93,13 @@ class PullRequestFinalizer {
             if (prFormat === 'ms') {
               if (metricCmped.diff > MS_THRESHOLD) {
                 resultHasIncrease = true
-              } else {
+              } else if (metricCmped.diff < -MS_THRESHOLD) {
                 resultHasDecrease = true
               }
             } else if (prFormat === 'bytes') {
               if (metricCmped.diff > BYTES_THRESHOLD) {
                 resultHasIncrease = true
-              } else {
+              } else if (metricCmped.diff < -BYTES_THRESHOLD) {
                 resultHasDecrease = true
               }
             }
