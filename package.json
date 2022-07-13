@@ -6,7 +6,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "test": "mocha __tests__/*.spec.js",
+    "test": "mocha -r esbuild-register __tests__/*.spec.ts",
     "setup:debug": "esno debug-setup.ts",
     "clean:debug": "esno debug-cleanup.ts",
     "action:debug": "NODE_ENV=debug node -r ./register.js --expose-gc index.ts",

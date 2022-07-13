@@ -3,4 +3,4 @@ import { BuildProfile } from './build-profile'
 import { DistSizePlugin } from './dist-size'
 import { HotReload } from './hot-reload'
 
-export const fixturePlugins = [HotReload, ColdStartPlugin, BuildProfile, DistSizePlugin]
+export const fixturePlugins = [] as any || [HotReload, ColdStartPlugin, BuildProfile, DistSizePlugin]
