@@ -1,0 +1,5 @@
+{
+  "name": "basic-entry",
+  "main": "./dist/index.js",
+  "module": "./dist/index.esm.js"
+}

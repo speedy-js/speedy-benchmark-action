@@ -1,4 +1,4 @@
-import { getDirSize, RushKit, getEntryPoint } from '../../utils'
+import { getDirSize, RushKit, getPackageEntry } from '../../utils'
 import { PerformancePluginSpeedy, PluginBenchmark, Project } from '../base'
 
 class BundleSizePlugin extends PerformancePluginSpeedy {
@@ -10,7 +10,7 @@ class BundleSizePlugin extends PerformancePluginSpeedy {
   }
 
   async runEach (project: Project): Promise<PluginBenchmark | void> {
-    const entryPoint = await getEntryPoint(project.absoluteFolder)
+    const entryPoint = await getPackageEntry(project.absoluteFolder)
 
     if (!entryPoint) {
       return
