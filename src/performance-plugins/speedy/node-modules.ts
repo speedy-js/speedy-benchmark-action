@@ -18,7 +18,9 @@ class NodeModulesPlugin extends PerformancePluginSpeedy {
     )
     const size = await getDirSize(path.join(project.absoluteFolder, 'node_modules'), {
       // omit dev dependencies
-      filter: (filePath) => !devDependencyPaths.includes(filePath)
+      ignorePath: (filePath) => {
+        return devDependencyPaths.includes(filePath)
+      }
     })
     return {
       metrics: [{
