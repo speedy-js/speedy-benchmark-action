@@ -6,10 +6,10 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "strict": true,
+    "lib": ["ESNext"],
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "outDir": "dist"
   },
-  "exclude": ["benchmarks", "node_modules/**"],
-  "include": ["src"]
+  "exclude": ["benchmarks", "node_modules/**", "__tests__"]
 }
