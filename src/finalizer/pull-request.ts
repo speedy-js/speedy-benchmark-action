@@ -56,8 +56,10 @@ const comment = async (summary: string) => {
   }
 }
 
-const MS_THRESHOLD = 300 // 300ms
-const BYTES_THRESHOLD = 2048 // 2kb
+const SPEEDY_MS_THRESHOLD = 300 // 300ms
+const SPEEDY_BYTES_THRESHOLD = 2048 // 2kb
+const FIXTURE_MS_THRESHOLD = 300 // 300ms
+const FIXTURE_BYTES_THRESHOLD = 10240 // 1mb
 
 class PullRequestFinalizer {
   constructor (public speedyComparison: SpeedyBenchmarkCompared, public fixtureComparison: FixtureBenchmarkCompared) {}
@@ -91,15 +93,15 @@ class PullRequestFinalizer {
 
           if (metricCmped?.diff) {
             if (prFormat === 'ms') {
-              if (metricCmped.diff > MS_THRESHOLD) {
+              if (metricCmped.diff > FIXTURE_MS_THRESHOLD) {
                 resultHasIncrease = true
-              } else if (metricCmped.diff < -MS_THRESHOLD) {
+              } else if (metricCmped.diff < -FIXTURE_MS_THRESHOLD) {
                 resultHasDecrease = true
               }
             } else if (prFormat === 'bytes') {
-              if (metricCmped.diff > BYTES_THRESHOLD) {
+              if (metricCmped.diff > FIXTURE_BYTES_THRESHOLD) {
                 resultHasIncrease = true
-              } else if (metricCmped.diff < -BYTES_THRESHOLD) {
+              } else if (metricCmped.diff < -FIXTURE_BYTES_THRESHOLD) {
                 resultHasDecrease = true
               }
             }
@@ -149,7 +151,7 @@ class PullRequestFinalizer {
       return { markdown: resultContent, hasIncrease: resultHasIncrease }
     })
 
-    let fixtureMarkdown = '## Fixture\n\n'
+    let fixtureMarkdown = '### Fixture\n\n'
     fixtureMarkdown += fixture.map(item => item?.markdown).join('\n')
 
     return { markdown: fixtureMarkdown, hasIncrease: fixture.some(item => item?.hasIncrease) }
@@ -180,15 +182,15 @@ class PullRequestFinalizer {
 
         if (metricsCmped?.[0]) {
           if (prFormat === 'ms') {
-            if (metricsCmped[0].diff > MS_THRESHOLD) {
+            if (metricsCmped[0].diff > SPEEDY_MS_THRESHOLD) {
               resultHasIncrease = true
-            } else if (metricsCmped[0].diff < 0) {
+            } else if (metricsCmped[0].diff < -SPEEDY_MS_THRESHOLD) {
               resultHasDecrease = true
             }
           } else if (prFormat === 'bytes') {
-            if (metricsCmped[0].diff > BYTES_THRESHOLD) {
+            if (metricsCmped[0].diff > SPEEDY_BYTES_THRESHOLD) {
               resultHasIncrease = true
-            } else if (metricsCmped[0].diff < 0) {
+            } else if (metricsCmped[0].diff < -SPEEDY_BYTES_THRESHOLD) {
               resultHasDecrease = true
             }
           }
@@ -211,7 +213,7 @@ class PullRequestFinalizer {
       }
     }).filter((item): item is Exclude<typeof item, null> => Boolean(item))
 
-    let speedyMarkdown = '## Speedy\n\n'
+    let speedyMarkdown = '### Speedy\n\n'
 
     speedyMarkdown += speedy.reduce((str, curr) => {
       const columns = [curr.columns, ...curr.data]
@@ -237,14 +239,18 @@ class PullRequestFinalizer {
   async finalize () {
     const fixture = await this.finalizeFixture()
     const speedy = await this.finalizeSpeedy()
-    const markdown = `# Speedy Benchmark Result\n\n${fixture.markdown}${speedy.markdown}`
+    const markdown = `## Benchmark Result\n\n${fixture.markdown}${speedy.markdown}`
     console.log('PR Finalized Result')
     console.log(markdown)
 
     await comment(markdown)
 
-    if (speedy.hasIncrease || fixture.hasIncrease) {
-      throw new Error(`PR has increase, threshold: ${MS_THRESHOLD}ms, ${BYTES_THRESHOLD}bytes`)
+    if (speedy.hasIncrease) {
+      throw new Error(`PR has increase, threshold: ${SPEEDY_MS_THRESHOLD}ms, ${SPEEDY_BYTES_THRESHOLD}bytes`)
+    }
+
+    if (fixture.hasIncrease) {
+      throw new Error(`PR has increase, threshold: ${FIXTURE_MS_THRESHOLD}ms, ${FIXTURE_BYTES_THRESHOLD}bytes`)
     }
   }
 }
